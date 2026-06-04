@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 
 export interface Telemetry {
   altitude: number
+  distance: number
   velocity: number
   fuel: number
   o2: number
@@ -23,7 +24,8 @@ export interface Status {
 
 export interface HistoryPoint {
   time: number
-  val: number
+  altitude: number
+  distance: number
 }
 
 export interface LogEntry {
@@ -53,7 +55,7 @@ const TelemetryContext = createContext<TelemetryContextType | undefined>(undefin
 
 export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [telemetry, setTelemetry] = useState<Telemetry>({
-    altitude: 0, velocity: 0, fuel: 100, o2: 100, heartRate: 75, met: 0, countdown: -30, isCounting: false, hasLaunched: false, stage: 1, maxStages: 2, launcher: 'Falcon 9', mission: 'LEO'
+    altitude: 0, distance: 0, velocity: 0, fuel: 100, o2: 100, heartRate: 75, met: 0, countdown: -30, isCounting: false, hasLaunched: false, stage: 1, maxStages: 2, launcher: 'Falcon 9', mission: 'LEO'
   })
   const [status, setStatus] = useState<Status>({
     booster: 'WAITING', guidance: 'WAITING', capsule: 'WAITING', ground: 'WAITING'
@@ -74,7 +76,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data.type === 'TELEMETRY') {
         const newTel = data.payload as Telemetry
         setTelemetry(newTel)
-        setHistory(prev => [...prev, { time: newTel.met, val: newTel.altitude }])
+        setHistory(prev => [...prev, { time: newTel.met, altitude: newTel.altitude, distance: newTel.distance }])
 
         const timeStr = newTel.hasLaunched ? formatMET(newTel.met) : formatCountdown(newTel.countdown)
 

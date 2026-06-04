@@ -62,6 +62,7 @@ let flightFinishedMet = -1;
 
 let telemetry = {
     altitude: 0,
+    distance: 0,
     velocity: 0,
     fuel: 100,
     o2: 100,
@@ -98,6 +99,7 @@ function resetMission() {
     const maxStages = LAUNCHERS[currentLauncher]?.stages?.length || 2
     telemetry = {
         altitude: 0,
+        distance: 0,
         velocity: 0,
         fuel: 100,
         o2: 100,
@@ -166,15 +168,22 @@ setInterval(() => {
         }
 
         // Physics based on stage configuration
+        // Simulate a gravity turn where pitch starts at 90 deg (pi/2) and decreases over time (e.g. 600s to orbit)
+        const pitch = Math.max(0, (Math.PI / 2) * (1 - telemetry.met / 600))
+        
         if (telemetry.fuel > 0) {
-            telemetry.altitude += Math.random() * 500 + (telemetry.velocity * 0.1)
             telemetry.velocity += Math.random() * currentStageConfig.accel + 20
+            
+            // Apportion velocity into vertical (altitude) and horizontal (distance) components
+            telemetry.altitude += (telemetry.velocity * Math.sin(pitch) * 0.1) + Math.random() * 100
+            telemetry.distance += (telemetry.velocity * Math.cos(pitch) * 0.1) + Math.random() * 50
             
             // Fuel consumption
             telemetry.fuel = Math.max(0, telemetry.fuel - currentStageConfig.burn)
         } else {
-            // Drifting (or falling if gravity was implemented)
-            telemetry.altitude += telemetry.velocity * 0.1
+            // Drifting
+            telemetry.altitude += telemetry.velocity * Math.sin(pitch) * 0.1
+            telemetry.distance += telemetry.velocity * Math.cos(pitch) * 0.1
         }
         
         telemetry.o2 = Math.max(0, telemetry.o2 - 0.01)
