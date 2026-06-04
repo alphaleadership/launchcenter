@@ -312,6 +312,11 @@ server = Bun.serve({
                 }
                 const diffSeconds = nowUnix - launchDateUnix
                 
+                if (launch.rocket && launch.rocket.configuration && launch.rocket.configuration.name) {
+                    // Try to match the exact name, or just use it even if not in DB (will fallback to 2 stages)
+                    currentLauncher = launch.rocket.configuration.name
+                }
+                
                 resetMission()
                 currentMission = `IRL: ${launch.name}`
                 telemetry.mission = currentMission
