@@ -12,8 +12,8 @@ export const AltitudeProfile: React.FC = () => {
         <div className="absolute inset-0">
           <ResponsiveContainer width="99%" height="100%">
             <LineChart data={history} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-              <XAxis dataKey="distance" hide />
-              <YAxis stroke="#003b00" fontSize={10} />
+              <XAxis type="number" dataKey="distance" domain={['dataMin', 'dataMax']} hide />
+              <YAxis type="number" dataKey="altitude" stroke="#003b00" fontSize={10} />
               <Tooltip
                 contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #003b00' }}
                 itemStyle={{ color: '#00ff41' }}
