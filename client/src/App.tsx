@@ -5,13 +5,22 @@ import { TelemetryProvider, useTelemetry } from './context/TelemetryContext'
 import { FlexLayoutWrapper } from './components/FlexLayoutWrapper'
 
 const AppContent: React.FC = () => {
-  const { telemetry, formatMET, formatCountdown, startCountdown, holdCountdown, syncWithIRL, status } = useTelemetry()
+  const {
+    telemetry,
+    formatMET,
+    formatCountdown,
+    startCountdown,
+    holdCountdown,
+    syncWithIRL,
+    status
+  } = useTelemetry()
   const headerRef = useRef<HTMLDivElement>(null)
   const footerRef = useRef<HTMLDivElement>(null)
   const [layoutHeight, setLayoutHeight] = useState<number>(0)
 
-  const isFinalCountdown = !telemetry.hasLaunched && telemetry.countdown >= -10 && telemetry.isCounting
-  const isAllGo = Object.values(status).length > 0 && Object.values(status).every(s => s === 'GO')
+  const isFinalCountdown =
+    !telemetry.hasLaunched && telemetry.countdown >= -10 && telemetry.isCounting
+  const isAllGo = Object.values(status).length > 0 && Object.values(status).every((s) => s === 'GO')
 
   // Calcule la hauteur disponible pour FlexLayout en soustrayant header et footer
   useLayoutEffect(() => {
@@ -30,8 +39,8 @@ const AppContent: React.FC = () => {
   return (
     <div
       className={cn(
-        "bg-houston-dark text-houston-green p-4 font-mono crt overflow-hidden transition-colors duration-500",
-        isFinalCountdown && (telemetry.countdown % 2 === 0 ? "bg-red-950/20" : "bg-houston-dark")
+        'bg-houston-dark text-houston-green p-4 font-mono crt overflow-hidden transition-colors duration-500',
+        isFinalCountdown && (telemetry.countdown % 2 === 0 ? 'bg-red-950/20' : 'bg-houston-dark')
       )}
       style={{ height: '100vh', boxSizing: 'border-box', isolation: 'isolate' }}
     >
@@ -47,14 +56,24 @@ const AppContent: React.FC = () => {
       )}
 
       {/* Header */}
-      <div ref={headerRef} className="border-b border-houston-muted pb-2 mb-4 flex justify-between items-center relative z-10">
+      <div
+        ref={headerRef}
+        className="border-b border-houston-muted pb-2 mb-4 flex justify-between items-center relative z-10"
+      >
         <div className="flex items-center gap-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tighter flex items-center gap-2">
-              <Rocket className={cn(telemetry.hasLaunched && "animate-bounce", telemetry.isCounting && !telemetry.hasLaunched && "animate-pulse")} />
+              <Rocket
+                className={cn(
+                  telemetry.hasLaunched && 'animate-bounce',
+                  telemetry.isCounting && !telemetry.hasLaunched && 'animate-pulse'
+                )}
+              />
               HOUSTON MISSION CONTROL
             </h1>
-            <p className="text-xs text-houston-muted">NASA-JSC // {telemetry.launcher.toUpperCase()} - {telemetry.mission} OPERATION</p>
+            <p className="text-xs text-houston-muted">
+              NASA-JSC // {telemetry.launcher.toUpperCase()} - {telemetry.mission} OPERATION
+            </p>
           </div>
 
           {!telemetry.hasLaunched && !telemetry.isCounting && (
@@ -63,15 +82,15 @@ const AppContent: React.FC = () => {
                 onClick={startCountdown}
                 disabled={!isAllGo}
                 className={cn(
-                  "px-6 py-2 border-2 font-black transition-all animate-pulse",
-                  isAllGo 
-                    ? "bg-houston-green text-black border-houston-green hover:bg-black hover:text-houston-green cursor-pointer" 
-                    : "border-houston-muted text-houston-muted cursor-not-allowed opacity-50"
+                  'px-6 py-2 border-2 font-black transition-all animate-pulse',
+                  isAllGo
+                    ? 'bg-houston-green text-black border-houston-green hover:bg-black hover:text-houston-green cursor-pointer'
+                    : 'border-houston-muted text-houston-muted cursor-not-allowed opacity-50'
                 )}
               >
-                {isAllGo ? "▶ INITIATE COUNTDOWN" : "WAITING FOR ALL SYSTEMS GO"}
+                {isAllGo ? '▶ INITIATE COUNTDOWN' : 'WAITING FOR ALL SYSTEMS GO'}
               </button>
-              
+
               <button
                 onClick={syncWithIRL}
                 className="px-4 py-2 border-2 font-bold transition-all border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
@@ -93,20 +112,36 @@ const AppContent: React.FC = () => {
           )}
         </div>
         <div className="text-right">
-          <div className={cn(
-            "text-3xl font-bold tabular-nums",
-            !telemetry.hasLaunched && "text-yellow-500",
-            isFinalCountdown && "text-red-500 animate-pulse"
-          )}>
-            {telemetry.hasLaunched ? `MET ${formatMET(telemetry.met)}` : formatCountdown(telemetry.countdown)}
+          <div
+            className={cn(
+              'text-3xl font-bold tabular-nums',
+              !telemetry.hasLaunched && 'text-yellow-500',
+              isFinalCountdown && 'text-red-500 animate-pulse'
+            )}
+          >
+            {telemetry.hasLaunched
+              ? `MET ${formatMET(telemetry.met)}`
+              : formatCountdown(telemetry.countdown)}
           </div>
           <div className="flex gap-4 justify-end text-xs">
-            <div className="text-houston-green font-bold uppercase">Stage {telemetry.stage}/{telemetry.maxStages}</div>
-            <div className={cn(
-              "font-bold uppercase",
-              telemetry.hasLaunched ? "text-houston-green" : telemetry.isCounting ? "text-yellow-500" : "text-red-500"
-            )}>
-              {telemetry.hasLaunched ? 'IN FLIGHT' : telemetry.isCounting ? 'COUNTDOWN ACTIVE' : 'HOLD / WAITING'}
+            <div className="text-houston-green font-bold uppercase">
+              Stage {telemetry.stage}/{telemetry.maxStages}
+            </div>
+            <div
+              className={cn(
+                'font-bold uppercase',
+                telemetry.hasLaunched
+                  ? 'text-houston-green'
+                  : telemetry.isCounting
+                    ? 'text-yellow-500'
+                    : 'text-red-500'
+              )}
+            >
+              {telemetry.hasLaunched
+                ? 'IN FLIGHT'
+                : telemetry.isCounting
+                  ? 'COUNTDOWN ACTIVE'
+                  : 'HOLD / WAITING'}
             </div>
           </div>
         </div>
@@ -117,18 +152,21 @@ const AppContent: React.FC = () => {
         style={{
           position: 'relative',
           zIndex: 10,
-          height: layoutHeight > 0 ? `${layoutHeight}px` : 'calc(100vh - 200px)',
+          height: layoutHeight > 0 ? `${layoutHeight}px` : 'calc(100vh - 200px)'
         }}
       >
         <FlexLayoutWrapper />
       </div>
 
       {/* Footer */}
-      <div ref={footerRef} className="mt-4 text-[10px] text-houston-muted flex justify-between uppercase relative z-10">
+      <div
+        ref={footerRef}
+        className="mt-4 text-[10px] text-houston-muted flex justify-between uppercase relative z-10"
+      >
         <span>Terminal: JSC-MOC-2026-07-02</span>
         <div className="flex gap-4">
-          <span className={cn(telemetry.isCounting && "animate-pulse text-houston-green")}>
-            {telemetry.isCounting ? ">> DATA_LINK_ACTIVE" : "|| DATA_LINK_STANDBY"}
+          <span className={cn(telemetry.isCounting && 'animate-pulse text-houston-green')}>
+            {telemetry.isCounting ? '>> DATA_LINK_ACTIVE' : '|| DATA_LINK_STANDBY'}
           </span>
           <span>Secure Connection Active // End of Line</span>
         </div>

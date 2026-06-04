@@ -7,7 +7,9 @@ export const AltitudeProfile: React.FC = () => {
 
   return (
     <div className="p-3 h-full bg-black/50 flex flex-col overflow-hidden">
-      <h2 className="text-sm font-bold mb-3 border-b border-houston-muted pb-1 shrink-0">ALTITUDE PROFILE (m)</h2>
+      <h2 className="text-sm font-bold mb-3 border-b border-houston-muted pb-1 shrink-0">
+        ALTITUDE PROFILE (m)
+      </h2>
       <div className="flex-1 min-h-0 w-full relative">
         <div className="absolute inset-0">
           <ResponsiveContainer width="99%" height="100%">
@@ -18,9 +20,19 @@ export const AltitudeProfile: React.FC = () => {
                 contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #003b00' }}
                 itemStyle={{ color: '#00ff41' }}
                 labelStyle={{ display: 'none' }}
-                formatter={(value: any, name: any) => [Number(value || 0).toFixed(0), String(name || '').toUpperCase()]}
+                formatter={(value: any, name: any) => [
+                  Number(value || 0).toFixed(0),
+                  String(name || '').toUpperCase()
+                ]}
               />
-              <Line type="monotone" dataKey="altitude" stroke="#00ff41" dot={false} strokeWidth={2} isAnimationActive={false} />
+              <Line
+                type="monotone"
+                dataKey="altitude"
+                stroke="#00ff41"
+                dot={false}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

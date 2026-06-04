@@ -55,10 +55,26 @@ const TelemetryContext = createContext<TelemetryContextType | undefined>(undefin
 
 export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [telemetry, setTelemetry] = useState<Telemetry>({
-    altitude: 0, distance: 0, velocity: 0, fuel: 100, o2: 100, heartRate: 75, met: 0, countdown: -30, isCounting: false, hasLaunched: false, stage: 1, maxStages: 2, launcher: 'Falcon 9', mission: 'LEO'
+    altitude: 0,
+    distance: 0,
+    velocity: 0,
+    fuel: 100,
+    o2: 100,
+    heartRate: 75,
+    met: 0,
+    countdown: -30,
+    isCounting: false,
+    hasLaunched: false,
+    stage: 1,
+    maxStages: 2,
+    launcher: 'Falcon 9',
+    mission: 'LEO'
   })
   const [status, setStatus] = useState<Status>({
-    booster: 'WAITING', guidance: 'WAITING', capsule: 'WAITING', ground: 'WAITING'
+    booster: 'WAITING',
+    guidance: 'WAITING',
+    capsule: 'WAITING',
+    ground: 'WAITING'
   })
   const [availableLaunchers, setAvailableLaunchers] = useState<string[]>([])
   const [availableMissions, setAvailableMissions] = useState<string[]>([])
@@ -76,9 +92,14 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data.type === 'TELEMETRY') {
         const newTel = data.payload as Telemetry
         setTelemetry(newTel)
-        setHistory(prev => [...prev, { time: newTel.met, altitude: newTel.altitude, distance: newTel.distance }])
+        setHistory((prev) => [
+          ...prev,
+          { time: newTel.met, altitude: newTel.altitude, distance: newTel.distance }
+        ])
 
-        const timeStr = newTel.hasLaunched ? formatMET(newTel.met) : formatCountdown(newTel.countdown)
+        const timeStr = newTel.hasLaunched
+          ? formatMET(newTel.met)
+          : formatCountdown(newTel.countdown)
 
         if (prevTelemetry.current && !newTel.hasLaunched && prevTelemetry.current.hasLaunched) {
           setLogs([])
@@ -87,32 +108,52 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const newLogs: LogEntry[] = []
 
         if (!connectedRef.current) {
-          newLogs.push({ time: "0:00:00:00", message: "SYS: CONNECTED TO HOUSTON_CC", color: "text-houston-muted" })
+          newLogs.push({
+            time: '0:00:00:00',
+            message: 'SYS: CONNECTED TO HOUSTON_CC',
+            color: 'text-houston-muted'
+          })
           connectedRef.current = true
         }
 
         if (newTel.isCounting && (!prevTelemetry.current || !prevTelemetry.current.isCounting)) {
-          newLogs.push({ time: timeStr, message: "SYS: COUNTDOWN INITIATED", color: "text-houston-green" })
+          newLogs.push({
+            time: timeStr,
+            message: 'SYS: COUNTDOWN INITIATED',
+            color: 'text-houston-green'
+          })
         }
 
         if (!newTel.isCounting && !newTel.hasLaunched && prevTelemetry.current?.isCounting) {
-          newLogs.push({ time: timeStr, message: "WRN: COUNTDOWN HOLD - CHECK SYSTEMS", color: "text-red-500" })
+          newLogs.push({
+            time: timeStr,
+            message: 'WRN: COUNTDOWN HOLD - CHECK SYSTEMS',
+            color: 'text-red-500'
+          })
         }
 
         if (newTel.hasLaunched && (!prevTelemetry.current || !prevTelemetry.current.hasLaunched)) {
-          newLogs.push({ time: "0:00:00:00", message: "EVT: LIFT OFF CONFIRMED", color: "text-white font-bold" })
+          newLogs.push({
+            time: '0:00:00:00',
+            message: 'EVT: LIFT OFF CONFIRMED',
+            color: 'text-white font-bold'
+          })
         }
 
         if (prevTelemetry.current && newTel.stage > prevTelemetry.current.stage) {
-          newLogs.push({ time: timeStr, message: "EVT: STAGE SEPARATION CONFIRMED", color: "text-yellow-500" })
+          newLogs.push({
+            time: timeStr,
+            message: 'EVT: STAGE SEPARATION CONFIRMED',
+            color: 'text-yellow-500'
+          })
         }
 
         if (newTel.fuel < 10 && (!prevTelemetry.current || prevTelemetry.current.fuel >= 10)) {
-          newLogs.push({ time: timeStr, message: "WRN: FUEL LOW", color: "text-red-500" })
+          newLogs.push({ time: timeStr, message: 'WRN: FUEL LOW', color: 'text-red-500' })
         }
 
         if (newLogs.length > 0) {
-          setLogs(prev => [...prev, ...newLogs])
+          setLogs((prev) => [...prev, ...newLogs])
         }
 
         prevTelemetry.current = newTel
@@ -129,44 +170,56 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [])
 
   const setSystemStatus = (system: string, newStatus: string) => {
-    ws.current?.send(JSON.stringify({
-      type: 'GO_NO_GO',
-      payload: { system, status: newStatus }
-    }))
+    ws.current?.send(
+      JSON.stringify({
+        type: 'GO_NO_GO',
+        payload: { system, status: newStatus }
+      })
+    )
   }
 
   const selectLauncher = (launcher: string) => {
-    ws.current?.send(JSON.stringify({
-      type: 'SELECT_LAUNCHER',
-      payload: launcher
-    }))
+    ws.current?.send(
+      JSON.stringify({
+        type: 'SELECT_LAUNCHER',
+        payload: launcher
+      })
+    )
     setHistory([])
   }
 
   const selectMission = (mission: string) => {
-    ws.current?.send(JSON.stringify({
-      type: 'SELECT_MISSION',
-      payload: mission
-    }))
+    ws.current?.send(
+      JSON.stringify({
+        type: 'SELECT_MISSION',
+        payload: mission
+      })
+    )
     setHistory([])
   }
 
   const startCountdown = () => {
-    ws.current?.send(JSON.stringify({
-      type: 'START_COUNTDOWN'
-    }))
+    ws.current?.send(
+      JSON.stringify({
+        type: 'START_COUNTDOWN'
+      })
+    )
   }
 
   const holdCountdown = () => {
-    ws.current?.send(JSON.stringify({
-      type: 'HOLD_COUNTDOWN'
-    }))
+    ws.current?.send(
+      JSON.stringify({
+        type: 'HOLD_COUNTDOWN'
+      })
+    )
   }
 
   const syncWithIRL = () => {
-    ws.current?.send(JSON.stringify({
-      type: 'SYNC_IRL'
-    }))
+    ws.current?.send(
+      JSON.stringify({
+        type: 'SYNC_IRL'
+      })
+    )
   }
 
   const formatMET = (seconds: number) => {
@@ -174,8 +227,9 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const h = Math.floor((seconds % (3600 * 24)) / 3600)
     const m = Math.floor((seconds % 3600) / 60)
     const s = seconds % 60
-    
-    if (d > 0) return `${d}:${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+
+    if (d > 0)
+      return `${d}:${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
 
@@ -185,19 +239,35 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const h = Math.floor((abs % (3600 * 24)) / 3600)
     const m = Math.floor((abs % 3600) / 60)
     const s = abs % 60
-    
+
     // Format NASA standard T- DDD:HH:MM:SS or T- HH:MM:SS
-    if (d > 0) return `T- ${d}:${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-    if (h > 0) return `T- ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-    
+    if (d > 0)
+      return `T- ${d}:${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+    if (h > 0)
+      return `T- ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+
     return `T- ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
 
   return (
-    <TelemetryContext.Provider value={{
-      telemetry, status, availableLaunchers, availableMissions, history, logs,
-      setSystemStatus, selectLauncher, selectMission, startCountdown, holdCountdown, syncWithIRL, formatMET, formatCountdown
-    }}>
+    <TelemetryContext.Provider
+      value={{
+        telemetry,
+        status,
+        availableLaunchers,
+        availableMissions,
+        history,
+        logs,
+        setSystemStatus,
+        selectLauncher,
+        selectMission,
+        startCountdown,
+        holdCountdown,
+        syncWithIRL,
+        formatMET,
+        formatCountdown
+      }}
+    >
       {children}
     </TelemetryContext.Provider>
   )
