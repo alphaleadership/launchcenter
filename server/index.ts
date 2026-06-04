@@ -64,6 +64,8 @@ let telemetry = {
     altitude: 0,
     distance: 0,
     velocity: 0,
+    vx: 0,
+    vy: 0,
     fuel: 100,
     o2: 100,
     heartRate: 75,
@@ -101,6 +103,8 @@ function resetMission() {
         altitude: 0,
         distance: 0,
         velocity: 0,
+        vx: 0,
+        vy: 0,
         fuel: 100,
         o2: 100,
         heartRate: 75,
@@ -168,23 +172,27 @@ setInterval(() => {
         }
 
         // Physics based on stage configuration
-        // Simulate a gravity turn where pitch starts at 90 deg (pi/2) and decreases over time (e.g. 600s to orbit)
+        // Simulate a gravity turn where pitch starts at 90 deg (pi/2) and decreases to 0
         const pitch = Math.max(0, (Math.PI / 2) * (1 - telemetry.met / 600))
+        const gravity = 9.81
         
         if (telemetry.fuel > 0) {
-            telemetry.velocity += Math.random() * currentStageConfig.accel + 20
+            const engineAccel = (Math.random() * currentStageConfig.accel + 20) * 0.1 // scale down for tick
             
-            // Apportion velocity into vertical (altitude) and horizontal (distance) components
-            telemetry.altitude += (telemetry.velocity * Math.sin(pitch) * 0.1) + Math.random() * 100
-            telemetry.distance += (telemetry.velocity * Math.cos(pitch) * 0.1) + Math.random() * 50
+            // Vector physics
+            telemetry.vx += engineAccel * Math.cos(pitch)
+            telemetry.vy += (engineAccel * Math.sin(pitch)) - (gravity * 0.1)
             
             // Fuel consumption
             telemetry.fuel = Math.max(0, telemetry.fuel - currentStageConfig.burn)
         } else {
-            // Drifting
-            telemetry.altitude += telemetry.velocity * Math.sin(pitch) * 0.1
-            telemetry.distance += telemetry.velocity * Math.cos(pitch) * 0.1
+            // Drifting, only gravity acts
+            telemetry.vy -= gravity * 0.1
         }
+        
+        telemetry.velocity = Math.sqrt(telemetry.vx * telemetry.vx + telemetry.vy * telemetry.vy)
+        telemetry.distance += telemetry.vx
+        telemetry.altitude = Math.max(0, telemetry.altitude + telemetry.vy)
         
         telemetry.o2 = Math.max(0, telemetry.o2 - 0.01)
 
