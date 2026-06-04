@@ -41,5 +41,11 @@
       { "accel": 55, "burn": 0.9 },
       { "accel": 130, "burn": 1.3 }
     ]
+  },
+  "Long March 6A": {
+    "stages": [
+      { "accel": 60, "burn": 0.6 },
+      { "accel": 90, "burn": 0.8 }
+    ]
   }
 }
