@@ -1,0 +1,22 @@
+{
+  "LEO": {
+    "name": "Low Earth Orbit (LEO)",
+    "targetAltitude": 400000,
+    "targetVelocity": 7800
+  },
+  "GEO": {
+    "name": "Geostationary Orbit (GEO)",
+    "targetAltitude": 35786000,
+    "targetVelocity": 3070
+  },
+  "Moon": {
+    "name": "Lunar Transfer (TLI)",
+    "targetAltitude": 384400000,
+    "targetVelocity": 10900
+  },
+  "Mars": {
+    "name": "Mars Transfer (TMI)",
+    "targetAltitude": 225000000000,
+    "targetVelocity": 11200
+  }
+}

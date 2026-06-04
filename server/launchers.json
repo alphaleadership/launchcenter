@@ -1,0 +1,45 @@
+{
+  "Falcon 9": {
+    "stages": [
+      { "accel": 55, "burn": 0.5 },
+      { "accel": 85, "burn": 0.8 }
+    ]
+  },
+  "Falcon Heavy": {
+    "stages": [
+      { "accel": 65, "burn": 0.7 },
+      { "accel": 95, "burn": 0.9 }
+    ]
+  },
+  "SLS Block 1": {
+    "stages": [
+      { "accel": 40, "burn": 1.4 },
+      { "accel": 110, "burn": 1.1 }
+    ]
+  },
+  "Vulcan Centaur": {
+    "stages": [
+      { "accel": 48, "burn": 0.5 },
+      { "accel": 78, "burn": 0.7 }
+    ]
+  },
+  "Atlas V 541": {
+    "stages": [
+      { "accel": 45, "burn": 0.6 },
+      { "accel": 80, "burn": 0.8 }
+    ]
+  },
+  "Electron": {
+    "stages": [
+      { "accel": 65, "burn": 0.3 },
+      { "accel": 95, "burn": 0.5 }
+    ]
+  },
+  "Soyuz-2.1b": {
+    "stages": [
+      { "accel": 35, "burn": 1.1 },
+      { "accel": 55, "burn": 0.9 },
+      { "accel": 130, "burn": 1.3 }
+    ]
+  }
+}

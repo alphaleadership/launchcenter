@@ -1,0 +1,284 @@
+@import "tailwindcss";
+@theme {
+  --color-houston-green: #00ff41;
+  --color-houston-dark: #0a0a0a;
+  --color-houston-muted: #003b00;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+:root {
+  background-color: #0a0a0a;
+  color: #00ff41;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+
+/* CRT Effect */
+.crt::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 2;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+.crt::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(18, 16, 16, 0.1);
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 0.27861;
+  }
+
+  5% {
+    opacity: 0.34769;
+  }
+
+  10% {
+    opacity: 0.23604;
+  }
+
+  15% {
+    opacity: 0.90626;
+  }
+
+  20% {
+    opacity: 0.18128;
+  }
+
+  25% {
+    opacity: 0.83891;
+  }
+
+  30% {
+    opacity: 0.65583;
+  }
+
+  35% {
+    opacity: 0.57807;
+  }
+
+  40% {
+    opacity: 0.26593;
+  }
+
+  45% {
+    opacity: 0.28741;
+  }
+
+  50% {
+    opacity: 0.58561;
+  }
+
+  55% {
+    opacity: 0.00351;
+  }
+
+  60% {
+    opacity: 0.15095;
+  }
+
+  65% {
+    opacity: 0.87198;
+  }
+
+  70% {
+    opacity: 0.31629;
+  }
+
+  75% {
+    opacity: 0.28338;
+  }
+
+  80% {
+    opacity: 0.74236;
+  }
+
+  85% {
+    opacity: 0.11242;
+  }
+
+  90% {
+    opacity: 0.67055;
+  }
+
+  95% {
+    opacity: 0.57418;
+  }
+
+  100% {
+    opacity: 0.11008;
+  }
+}
+
+.scanline {
+  width: 100%;
+  height: 100px;
+  z-index: 3;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(255, 255, 255, 0.2) 10%, rgba(0, 0, 0, 0.1) 100%);
+  opacity: 0.1;
+  position: absolute;
+  bottom: 100%;
+  animation: scanline 10s linear infinite;
+}
+
+@keyframes scanline {
+  0% {
+    bottom: 100%;
+  }
+
+  100% {
+    bottom: 0%;
+  }
+}
+
+/* FlexLayout Premium Futuristic Overrides */
+.flexlayout__layout {
+  background: transparent !important;
+}
+
+.flexlayout__tabset {
+  background: rgba(0, 20, 0, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(0, 255, 65, 0.3) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 255, 65, 0.05) !important;
+  overflow: hidden !important;
+  transition: all 0.3s ease;
+}
+
+.flexlayout__tabset_header {
+  background: linear-gradient(180deg, rgba(0, 59, 0, 0.8) 0%, rgba(0, 20, 0, 0.9) 100%) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em !important;
+  color: #00ff41 !important;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.2) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+.flexlayout__tab {
+  background: transparent !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+.flexlayout__tab_button {
+  background: transparent !important;
+  color: rgba(0, 255, 65, 0.5) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 0 16px !important;
+  margin-top: 2px !important;
+  border-top-left-radius: 6px !important;
+  border-top-right-radius: 6px !important;
+  border-right: 1px solid rgba(0, 255, 65, 0.1) !important;
+  border-top: 1px solid transparent !important;
+  border-left: 1px solid transparent !important;
+  transition: all 0.2s ease !important;
+  cursor: grab !important;
+}
+
+.flexlayout__tab_button:active {
+  cursor: grabbing !important;
+}
+
+.flexlayout__tab_button--selected {
+  background: rgba(0, 255, 65, 0.15) !important;
+  color: #00ff41 !important;
+  border-top: 1px solid rgba(0, 255, 65, 0.5) !important;
+  border-left: 1px solid rgba(0, 255, 65, 0.2) !important;
+  border-right: 1px solid rgba(0, 255, 65, 0.2) !important;
+  box-shadow: inset 0 2px 10px rgba(0, 255, 65, 0.1) !important;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.5) !important;
+}
+
+.flexlayout__tab_button:hover:not(.flexlayout__tab_button--selected) {
+  background: rgba(0, 255, 65, 0.05) !important;
+  color: #00ff41 !important;
+}
+
+.flexlayout__splitter {
+  background: rgba(0, 255, 65, 0.1) !important;
+  transition: background 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.flexlayout__splitter:hover {
+  background: rgba(0, 255, 65, 0.5) !important;
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.3) !important;
+}
+
+.flexlayout__splitter_drag {
+  background: #00ff41 !important;
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.8) !important;
+}
+
+.flexlayout__tabset-selected {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 255, 65, 0.15), 0 0 15px rgba(0, 255, 65, 0.3) !important;
+  border: 1px solid rgba(0, 255, 65, 0.6) !important;
+}
+
+.flexlayout__tab_button_trailing, .flexlayout__tab_button_leading {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px !important;
+  opacity: 0.5;
+  transition: all 0.2s ease !important;
+}
+
+.flexlayout__tab_button_trailing:hover, .flexlayout__tab_button_leading:hover {
+  opacity: 1;
+  color: #ff0044 !important;
+}
+
+/* Style the SVG icons inside the trailing buttons */
+.flexlayout__tab_button_trailing svg, .flexlayout__tab_button_leading svg {
+  fill: currentColor !important;
+  width: 12px;
+  height: 12px;
+}
+
+/* Scrollbar styling for premium look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 20, 0, 0.5);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 65, 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 65, 0.6);
+}
