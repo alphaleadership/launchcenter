@@ -262,6 +262,15 @@ server = Bun.serve({
       } else if (data.type === 'START_COUNTDOWN') {
         const isLaunchReady = Object.values(status).every(s => s === 'GO')
         if (isLaunchReady) {
+            // Apply recycle time if the countdown was held and is now less than recycle time
+            const config = LAUNCHERS[currentLauncher]
+            const recycleSeconds = config?.recycleTime || 600 // default 10 minutes
+            // If countdown is closer to 0 than -recycleSeconds, recycle it back to -recycleSeconds
+            if (telemetry.countdown > -recycleSeconds && telemetry.countdown < 0) {
+                telemetry.countdown = -recycleSeconds
+                console.log(`⏱️ Countdown recycled to T-${recycleSeconds}s`)
+            }
+            
             telemetry.isCounting = true
             console.log('🏁 Countdown manual trigger received')
         }
