@@ -15,7 +15,10 @@ export const Consumables: React.FC = () => {
             <span className="tabular-nums">{telemetry.fuel.toFixed(1)}%</span>
           </div>
           <div className="h-2 bg-houston-muted w-full overflow-hidden">
-            <div className="h-full bg-houston-green transition-all duration-1000" style={{ width: `${telemetry.fuel}%` }} />
+            <div
+              className="h-full bg-houston-green transition-all duration-1000"
+              style={{ width: `${telemetry.fuel}%` }}
+            />
           </div>
         </div>
 
@@ -25,7 +28,10 @@ export const Consumables: React.FC = () => {
             <span className="tabular-nums">{telemetry.o2.toFixed(1)}%</span>
           </div>
           <div className="h-2 bg-houston-muted w-full overflow-hidden">
-            <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${telemetry.o2}%` }} />
+            <div
+              className="h-full bg-blue-500 transition-all duration-1000"
+              style={{ width: `${telemetry.o2}%` }}
+            />
           </div>
         </div>
       </div>
