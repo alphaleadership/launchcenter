@@ -119,7 +119,9 @@ function resetMission() {
     // Dynamic status generation
     status = {
         'GUIDANCE': 'WAITING',
-        'GROUND': 'WAITING'
+        'GROUND': 'WAITING',
+        'RANGE': 'WAITING',
+        'WEATHER': 'WAITING'
     }
     for (let i = 1; i <= maxStages; i++) {
         status[`STAGE ${i}`] = 'WAITING'
