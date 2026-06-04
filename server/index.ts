@@ -143,9 +143,13 @@ app.get('/telemetry', (c) => c.json(telemetry))
 setInterval(() => {
     const isLaunchReady = Object.values(status).every(s => s === 'GO')
     
-    // Auto-abort countdown if a system is no longer GO
+    // Auto-abort countdown if a system is no longer GO, but only if we reached or passed the recycle time
+    const config = LAUNCHERS[currentLauncher]
+    const recycleSeconds = config?.recycleTime || 600
     if (!isLaunchReady && !telemetry.hasLaunched && telemetry.isCounting) {
-        telemetry.isCounting = false
+        if (telemetry.countdown >= -recycleSeconds) {
+            telemetry.isCounting = false
+        }
     }
 
     if (telemetry.isCounting && !telemetry.hasLaunched) {
