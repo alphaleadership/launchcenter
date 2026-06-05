@@ -12,7 +12,9 @@ const AppContent: React.FC = () => {
     startCountdown,
     holdCountdown,
     syncWithIRL,
-    status
+    status,
+    availableLaunchers,
+    selectLauncher
   } = useTelemetry()
   const headerRef = useRef<HTMLDivElement>(null)
   const footerRef = useRef<HTMLDivElement>(null)
@@ -77,7 +79,19 @@ const AppContent: React.FC = () => {
           </div>
 
           {!telemetry.hasLaunched && !telemetry.isCounting && (
-            <div className="flex gap-4">
+            <div className="flex items-center gap-4">
+              <select
+                value={telemetry.launcher}
+                onChange={(e) => selectLauncher(e.target.value)}
+                className="bg-black border-2 border-houston-muted text-houston-green px-3 py-2 font-bold uppercase outline-none focus:border-houston-green cursor-pointer transition-colors"
+              >
+                {availableLaunchers.map((launcher) => (
+                  <option key={launcher} value={launcher}>
+                    {launcher}
+                  </option>
+                ))}
+              </select>
+
               <button
                 onClick={startCountdown}
                 disabled={!isAllGo}
