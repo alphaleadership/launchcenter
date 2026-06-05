@@ -119,7 +119,9 @@ export const ObsOverlay: React.FC = () => {
                   <span className="font-bold">{system}</span>
                   <span className={cn(
                     "px-1.5 py-px text-[10px] font-black rounded uppercase",
-                    sysStatus === 'GO' ? "bg-houston-green text-black" : "bg-red-500 text-white animate-pulse"
+                    sysStatus === 'GO' ? "bg-houston-green text-black" : 
+                    sysStatus === 'NO-GO' ? "bg-red-500 text-white animate-pulse" : 
+                    "bg-yellow-500 text-black"
                   )}>
                     {sysStatus}
                   </span>
