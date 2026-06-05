@@ -218,11 +218,16 @@ setInterval(() => {
       telemetry.hasLaunched = true
       telemetry.countdown = 0
       telemetry.met = 0
+      console.log(`\n🚀 LIFTOFF ! Décollage de ${currentLauncher} pour la mission ${currentMission}`)
     }
   }
 
   if (telemetry.hasLaunched) {
     telemetry.met += 1
+    
+    if (telemetry.met === 60) {
+      console.log(`🌊 T+${formatMETForLog(telemetry.met)} - MAX-Q : Pression dynamique maximale atteinte !`)
+    }
     const config = LAUNCHERS[currentLauncher]
     // Safe access to stages array in case config is invalid
     const stages = config?.stages || [{ deltaV: 3000, burnTime: 150 }]
@@ -230,6 +235,8 @@ setInterval(() => {
 
     // Staging Logic
     if (telemetry.fuel <= 0 && telemetry.stage < stages.length) {
+      console.log(`🔥 T+${formatMETForLog(telemetry.met)} - MECO : Coupure du moteur de l'étage ${telemetry.stage} !`)
+      console.log(`🔄 T+${formatMETForLog(telemetry.met)} - STAGE SEP : Séparation de l'étage ${telemetry.stage} confirmée !`)
       telemetry.stage += 1
       telemetry.fuel = 100
       telemetry.velocity += 150 // Separation kick
@@ -273,6 +280,10 @@ setInterval(() => {
         
         totalThrust += thrust_booster
         telemetry.boostersFuel = Math.max(0, telemetry.boostersFuel - (100 / config.boosters.burnTime))
+        
+        if (telemetry.boostersFuel <= 0) {
+          console.log(`💥 T+${formatMETForLog(telemetry.met)} - BECO : Extinction et séparation des boosters latéraux !`)
+        }
       }
 
       // Acceleration = Thrust / Mass
@@ -302,8 +313,10 @@ setInterval(() => {
     if (telemetry.fuel <= 0 && telemetry.stage >= stages.length) {
       if (flightFinishedMet === -1) {
         flightFinishedMet = telemetry.met
+        console.log(`🔥 T+${formatMETForLog(telemetry.met)} - SECO : Coupure du moteur du dernier étage !`)
+        console.log(`✨ T+${formatMETForLog(telemetry.met)} - ORBIT : Insertion en orbite réussie !`)
         console.log(
-          `🏁 Flight finished! Orbit reached at MET ${formatMETForLog(telemetry.met)}. Resetting in 10s...`
+          `🏁 Flight finished! Orbit reached at MET ${formatMETForLog(telemetry.met)}. Resetting in 10s...\n`
         )
       } else if (telemetry.met >= flightFinishedMet + 10) {
         console.log(`🔄 Automatically resetting mission...`)
