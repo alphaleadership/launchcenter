@@ -64,6 +64,24 @@ export const ObsOverlay: React.FC = () => {
                 : 'HOLD / WAITING'}
           </span>
         </div>
+
+        {/* Flight Data Display - Only shown after launch */}
+        {telemetry.hasLaunched && (
+          <div className="bg-black/80 border-2 border-houston-green/50 px-5 py-3 rounded-xl flex gap-8 mt-2 shadow-[0_0_10px_rgba(0,255,0,0.1)] transition-all animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] text-houston-green/80 font-bold uppercase tracking-widest">Altitude</span>
+              <span className="text-2xl font-black tabular-nums text-white">{(telemetry.altitude / 1000).toFixed(1)} <span className="text-xs text-houston-green/80">km</span></span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] text-houston-green/80 font-bold uppercase tracking-widest">Velocity</span>
+              <span className="text-2xl font-black tabular-nums text-white">{Math.round(telemetry.velocity)} <span className="text-xs text-houston-green/80">km/h</span></span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] text-houston-green/80 font-bold uppercase tracking-widest">Stage</span>
+              <span className="text-2xl font-black tabular-nums text-white">{telemetry.stage}<span className="text-xs text-houston-green/80">/{telemetry.maxStages}</span></span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
