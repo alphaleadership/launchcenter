@@ -123,5 +123,18 @@
       }
     ],
     "recycleTime": 600
+  },
+  "Starship": {
+    "stages": [
+      {
+        "accel": 75,
+        "burn": 1.2
+      },
+      {
+        "accel": 110,
+        "burn": 1.5
+      }
+    ],
+    "recycleTime": 40
   }
 }
