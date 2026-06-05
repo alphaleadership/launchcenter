@@ -3,7 +3,31 @@ import { useTelemetry } from '../context/TelemetryContext'
 import { cn } from '../utils/cn'
 
 export const ObsOverlay: React.FC = () => {
-  const { telemetry, formatCountdown, formatMET, overlayConfig, status } = useTelemetry()
+  const { telemetry, formatCountdown, formatMET, overlayConfig, status, launcherDetails } = useTelemetry()
+
+  const config = launcherDetails[telemetry.launcher]
+
+  const flightEvents = React.useMemo(() => {
+    if (!config || !config.stages) return []
+    const evts = [
+      { name: 'LIFT OFF', time: 0 },
+      { name: 'MAX-Q', time: 60 }
+    ]
+    let t = 0
+    if (config.stages[0]) {
+      t += config.stages[0].burnTime
+      evts.push({ name: 'MECO', time: t })
+      evts.push({ name: 'STAGE SEP', time: t + 2 })
+    }
+    if (config.stages[1]) {
+      t += config.stages[1].burnTime
+      evts.push({ name: 'SECO', time: t })
+      evts.push({ name: 'ORBIT', time: t + 10 })
+    }
+    return evts
+  }, [config])
+
+  const maxFlightTime = flightEvents.length > 0 ? flightEvents[flightEvents.length - 1].time : 600
 
   const isFinalCountdown =
     !telemetry.hasLaunched && telemetry.countdown >= -10 && telemetry.isCounting
@@ -139,6 +163,49 @@ export const ObsOverlay: React.FC = () => {
                 ))}
               </>
             )}
+          </div>
+        </div>
+
+        {/* Flight Timeline - Only shown after launch */}
+        <div className={cn(
+          "transition-all duration-700 ease-in-out origin-bottom",
+          (overlayConfig.showChecklist && telemetry.hasLaunched) ? "opacity-100 scale-100 max-h-96 mt-1.5" : "opacity-0 scale-95 max-h-0 !m-0 overflow-hidden pointer-events-none"
+        )}>
+          <div className="bg-black/80 border-2 border-houston-green/50 p-2 rounded-xl flex flex-col gap-1 shadow-[0_0_10px_rgba(0,255,0,0.1)] w-80">
+            <div className="text-[9px] font-bold uppercase tracking-widest border-b border-houston-green/30 pb-1 mb-1 text-houston-green opacity-80">
+              FLIGHT TIMELINE
+            </div>
+            <div className="relative h-12 w-full flex items-center mt-2 px-2">
+              <div className="absolute left-2 right-2 h-px bg-houston-muted top-1/2 -translate-y-1/2" />
+              <div className="absolute left-2 h-1 bg-yellow-500 top-1/2 -translate-y-1/2 transition-all duration-1000 ease-linear"
+                   style={{ width: `calc(${Math.min(100, Math.max(0, (telemetry.met / maxFlightTime) * 100))}% - 4px)` }} />
+              
+              <div className="w-full h-full relative z-10">
+                {flightEvents.map((evt, idx) => {
+                  const passed = telemetry.met >= evt.time
+                  const isCurrent = telemetry.met >= evt.time && (idx === flightEvents.length - 1 || telemetry.met < flightEvents[idx + 1].time)
+                  return (
+                    <div key={evt.name} className="absolute flex flex-col items-center -translate-x-1/2" style={{ left: `${(evt.time / maxFlightTime) * 100}%`, top: '-2px' }}>
+                      <div className={cn(
+                        'w-2 h-2 rounded-full border bg-black transition-colors',
+                        passed ? 'border-houston-green bg-houston-green' : 'border-gray-500',
+                        isCurrent && 'bg-yellow-500 border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.8)]'
+                      )} />
+                      <div className={cn(
+                        "text-[8px] mt-1 text-center whitespace-nowrap transition-colors",
+                        isCurrent ? "text-yellow-500 font-bold" : (passed ? "text-houston-green" : "text-gray-500")
+                      )}>
+                        {evt.name}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="absolute -top-3 text-[10px] text-yellow-500 transition-all duration-1000 ease-linear"
+                   style={{ left: `calc(${Math.min(100, Math.max(0, (telemetry.met / maxFlightTime) * 100))}% + 4px)`, transform: 'translateX(-50%)' }}>
+                ▼
+              </div>
+            </div>
           </div>
         </div>
       </div>
