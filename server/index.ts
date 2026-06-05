@@ -381,13 +381,12 @@ server = Bun.serve({
         const { system, status: newStatus } = data.payload
         // @ts-ignore
         status[system] = newStatus
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'STATUS_UPDATE',
-            payload: status
-          })
-        )
+        const payloadStr = JSON.stringify({
+          type: 'STATUS_UPDATE',
+          payload: status
+        })
+        ws.send(payloadStr)
+        server.publish('houston-control', payloadStr)
       } else if (data.type === 'START_COUNTDOWN') {
         const isLaunchReady = Object.values(status).every((s) => s === 'GO')
         if (isLaunchReady) {
@@ -413,46 +412,43 @@ server = Bun.serve({
       } else if (data.type === 'SELECT_LAUNCHER') {
         currentLauncher = data.payload as keyof typeof LAUNCHERS
         resetMission()
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'STATUS_UPDATE',
-            payload: status
-          })
-        )
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'TELEMETRY',
-            payload: telemetry
-          })
-        )
+        const statusPayloadStr = JSON.stringify({
+          type: 'STATUS_UPDATE',
+          payload: status
+        })
+        ws.send(statusPayloadStr)
+        server.publish('houston-control', statusPayloadStr)
+
+        const telemetryPayloadStr = JSON.stringify({
+          type: 'TELEMETRY',
+          payload: telemetry
+        })
+        ws.send(telemetryPayloadStr)
+        server.publish('houston-control', telemetryPayloadStr)
       } else if (data.type === 'UPDATE_OVERLAY') {
         overlayConfig = { ...overlayConfig, ...data.payload }
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'OVERLAY_CONFIG',
-            payload: overlayConfig
-          })
-        )
+        const configPayloadStr = JSON.stringify({
+          type: 'OVERLAY_CONFIG',
+          payload: overlayConfig
+        })
+        ws.send(configPayloadStr)
+        server.publish('houston-control', configPayloadStr)
       } else if (data.type === 'SELECT_MISSION') {
         currentMission = data.payload as string
         resetMission()
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'STATUS_UPDATE',
-            payload: status
-          })
-        )
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'TELEMETRY',
-            payload: telemetry
-          })
-        )
+        const statusPayloadStr = JSON.stringify({
+          type: 'STATUS_UPDATE',
+          payload: status
+        })
+        ws.send(statusPayloadStr)
+        server.publish('houston-control', statusPayloadStr)
+
+        const telemetryPayloadStr = JSON.stringify({
+          type: 'TELEMETRY',
+          payload: telemetry
+        })
+        ws.send(telemetryPayloadStr)
+        server.publish('houston-control', telemetryPayloadStr)
       } else if (data.type === 'SYNC_IRL') {
         const launchId = data.payload
         let launch = irlLaunches[0]
@@ -522,20 +518,19 @@ server = Bun.serve({
             const launchDate = new Date(targetLaunchDateMs)
             console.log(`✅ Synced with IRL Launch: ${launch.name} (Countdown: ${formatCountdownForLog(diffSeconds)} - Prévu le: ${launchDate.toLocaleString('fr-FR')})`)
 
-            server.publish(
-              'houston-control',
-              JSON.stringify({
-                type: 'STATUS_UPDATE',
-                payload: status
-              })
-            )
-            server.publish(
-              'houston-control',
-              JSON.stringify({
-                type: 'TELEMETRY',
-                payload: telemetry
-              })
-            )
+            const statusPayloadStr = JSON.stringify({
+              type: 'STATUS_UPDATE',
+              payload: status
+            })
+            ws.send(statusPayloadStr)
+            server.publish('houston-control', statusPayloadStr)
+
+            const telemetryPayloadStr = JSON.stringify({
+              type: 'TELEMETRY',
+              payload: telemetry
+            })
+            ws.send(telemetryPayloadStr)
+            server.publish('houston-control', telemetryPayloadStr)
       }
     }
   }
