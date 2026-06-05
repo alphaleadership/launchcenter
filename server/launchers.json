@@ -1,95 +1,107 @@
 {
   "Falcon 9": {
+    "payloadMass": 15,
     "stages": [
-      { "deltaV": 3000, "burnTime": 162 },
-      { "deltaV": 6500, "burnTime": 397 }
+      { "deltaV": 3000, "burnTime": 162, "fuelMass": 400, "dryMass": 22 },
+      { "deltaV": 6500, "burnTime": 397, "fuelMass": 100, "dryMass": 4 }
     ],
     "recycleTime": 600
   },
   "Falcon Heavy": {
-    "boosters": { "deltaV": 3000, "burnTime": 154 },
+    "payloadMass": 60,
+    "boosters": { "deltaV": 3000, "burnTime": 154, "fuelMass": 800, "dryMass": 44 },
     "stages": [
-      { "deltaV": 3000, "burnTime": 250 },
-      { "deltaV": 6500, "burnTime": 397 }
+      { "deltaV": 3000, "burnTime": 250, "fuelMass": 400, "dryMass": 22 },
+      { "deltaV": 6500, "burnTime": 397, "fuelMass": 100, "dryMass": 4 }
     ],
     "recycleTime": 600
   },
   "SLS Block 1": {
-    "boosters": { "deltaV": 3500, "burnTime": 126 },
+    "payloadMass": 95,
+    "boosters": { "deltaV": 3500, "burnTime": 126, "fuelMass": 1360, "dryMass": 166 },
     "stages": [
-      { "deltaV": 5500, "burnTime": 480 },
-      { "deltaV": 3000, "burnTime": 1125 }
+      { "deltaV": 5500, "burnTime": 480, "fuelMass": 980, "dryMass": 85 },
+      { "deltaV": 3000, "burnTime": 1125, "fuelMass": 27, "dryMass": 3 }
     ],
     "recycleTime": 600
   },
   "Vulcan Centaur": {
-    "boosters": { "deltaV": 2000, "burnTime": 90 },
+    "payloadMass": 27,
+    "boosters": { "deltaV": 2000, "burnTime": 90, "fuelMass": 86, "dryMass": 10 },
     "stages": [
-      { "deltaV": 4500, "burnTime": 300 },
-      { "deltaV": 4000, "burnTime": 400 }
+      { "deltaV": 4500, "burnTime": 300, "fuelMass": 400, "dryMass": 30 },
+      { "deltaV": 4000, "burnTime": 400, "fuelMass": 50, "dryMass": 4 }
     ],
     "recycleTime": 600
   },
   "Atlas V 541": {
-    "boosters": { "deltaV": 1500, "burnTime": 94 },
+    "payloadMass": 17,
+    "boosters": { "deltaV": 1500, "burnTime": 94, "fuelMass": 160, "dryMass": 20 },
     "stages": [
-      { "deltaV": 4500, "burnTime": 253 },
-      { "deltaV": 4500, "burnTime": 842 }
+      { "deltaV": 4500, "burnTime": 253, "fuelMass": 280, "dryMass": 21 },
+      { "deltaV": 4500, "burnTime": 842, "fuelMass": 20, "dryMass": 2 }
     ],
     "recycleTime": 600
   },
   "Electron": {
+    "payloadMass": 0.3,
     "stages": [
-      { "deltaV": 2800, "burnTime": 150 },
-      { "deltaV": 5200, "burnTime": 330 },
-      { "deltaV": 1000, "burnTime": 60 }
+      { "deltaV": 2800, "burnTime": 150, "fuelMass": 10, "dryMass": 1 },
+      { "deltaV": 5200, "burnTime": 330, "fuelMass": 2, "dryMass": 0.2 },
+      { "deltaV": 1000, "burnTime": 60, "fuelMass": 0.1, "dryMass": 0.05 }
     ],
     "recycleTime": 600
   },
   "Soyuz-2.1b": {
-    "boosters": { "deltaV": 2000, "burnTime": 118 },
+    "payloadMass": 8,
+    "boosters": { "deltaV": 2000, "burnTime": 118, "fuelMass": 160, "dryMass": 16 },
     "stages": [
-      { "deltaV": 3000, "burnTime": 286 },
-      { "deltaV": 4000, "burnTime": 240 }
+      { "deltaV": 3000, "burnTime": 286, "fuelMass": 90, "dryMass": 7 },
+      { "deltaV": 4000, "burnTime": 240, "fuelMass": 25, "dryMass": 2 }
     ],
     "recycleTime": 600
   },
   "Long March 6A": {
-    "boosters": { "deltaV": 2000, "burnTime": 115 },
+    "payloadMass": 4,
+    "boosters": { "deltaV": 2000, "burnTime": 115, "fuelMass": 140, "dryMass": 15 },
     "stages": [
-      { "deltaV": 3500, "burnTime": 290 },
-      { "deltaV": 4000, "burnTime": 300 }
+      { "deltaV": 3500, "burnTime": 290, "fuelMass": 100, "dryMass": 10 },
+      { "deltaV": 4000, "burnTime": 300, "fuelMass": 20, "dryMass": 2 }
     ],
     "recycleTime": 600
   },
   "South Korean Solid-Fuel SLV": {
+    "payloadMass": 1.5,
     "stages": [
-      { "deltaV": 2500, "burnTime": 100 },
-      { "deltaV": 3000, "burnTime": 120 },
-      { "deltaV": 3500, "burnTime": 140 }
+      { "deltaV": 2500, "burnTime": 100, "fuelMass": 40, "dryMass": 5 },
+      { "deltaV": 3000, "burnTime": 120, "fuelMass": 15, "dryMass": 2 },
+      { "deltaV": 3500, "burnTime": 140, "fuelMass": 5, "dryMass": 1 }
     ],
     "recycleTime": 600
   },
   "Starship": {
+    "payloadMass": 100,
     "stages": [
-      { "deltaV": 3500, "burnTime": 170 },
-      { "deltaV": 6000, "burnTime": 360 }
+      { "deltaV": 3500, "burnTime": 170, "fuelMass": 3400, "dryMass": 200 },
+      { "deltaV": 6000, "burnTime": 360, "fuelMass": 1200, "dryMass": 100 }
     ],
     "recycleTime": 40
   },
   "Ariane 62": {
-    "boosters": { "deltaV": 2000, "burnTime": 135 },
+    "payloadMass": 10,
+    "boosters": { "deltaV": 2000, "burnTime": 135, "fuelMass": 280, "dryMass": 22 },
     "stages": [
-      { "deltaV": 4000, "burnTime": 460 },
-      { "deltaV": 4500, "burnTime": 900 }
+      { "deltaV": 4000, "burnTime": 460, "fuelMass": 140, "dryMass": 14 },
+      { "deltaV": 4500, "burnTime": 900, "fuelMass": 30, "dryMass": 4 }
     ],
     "recycleTime": 600
   },
   "Ariane 64": {
-    "boosters": { "deltaV": 2800, "burnTime": 135 },
+    "payloadMass": 21,
+    "boosters": { "deltaV": 2800, "burnTime": 135, "fuelMass": 560, "dryMass": 44 },
     "stages": [
-      { "deltaV": 3500, "burnTime": 460 },
-      { "deltaV": 4500, "burnTime": 900 }
+      { "deltaV": 3500, "burnTime": 460, "fuelMass": 140, "dryMass": 14 },
+      { "deltaV": 4500, "burnTime": 900, "fuelMass": 30, "dryMass": 4 }
     ],
     "recycleTime": 600
   }

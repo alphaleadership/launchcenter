@@ -241,13 +241,42 @@ setInterval(() => {
     const gravity = 9.81
 
     if (telemetry.fuel > 0) {
-      let engineAccel = currentStageConfig.deltaV / currentStageConfig.burnTime
+      // Tsiolkovsky equation setup
+      let M_init = config.payloadMass || 0
+      for (let i = telemetry.stage - 1; i < stages.length; i++) {
+        M_init += stages[i].dryMass + stages[i].fuelMass
+      }
       
-      // Add booster acceleration if stage 1 and boosters are active
+      let M_final = M_init - currentStageConfig.fuelMass
+      // Effective exhaust velocity (Ve) derived from Delta-V
+      const Ve_stage = currentStageConfig.deltaV / Math.log(M_init / M_final)
+      const thrust_stage = (currentStageConfig.fuelMass / currentStageConfig.burnTime) * Ve_stage
+
+      let totalThrust = thrust_stage
+      
+      // Calculate current mass dynamically
+      let currentMass = config.payloadMass || 0
+      for (let i = telemetry.stage; i < stages.length; i++) {
+        currentMass += stages[i].dryMass + stages[i].fuelMass
+      }
+      currentMass += currentStageConfig.dryMass + (currentStageConfig.fuelMass * (telemetry.fuel / 100))
+      
+      if (telemetry.stage === 1 && telemetry.hasBoosters && config.boosters) {
+        currentMass += config.boosters.dryMass + (config.boosters.fuelMass * (telemetry.boostersFuel / 100))
+      }
+      
       if (telemetry.stage === 1 && telemetry.hasBoosters && telemetry.boostersFuel > 0 && config.boosters) {
-        engineAccel += config.boosters.deltaV / config.boosters.burnTime
+        let M_init_b = M_init + config.boosters.dryMass + config.boosters.fuelMass
+        let M_final_b = M_init_b - config.boosters.fuelMass
+        const Ve_booster = config.boosters.deltaV / Math.log(M_init_b / M_final_b)
+        const thrust_booster = (config.boosters.fuelMass / config.boosters.burnTime) * Ve_booster
+        
+        totalThrust += thrust_booster
         telemetry.boostersFuel = Math.max(0, telemetry.boostersFuel - (100 / config.boosters.burnTime))
       }
+
+      // Acceleration = Thrust / Mass
+      let engineAccel = totalThrust / currentMass
 
       // Add a little randomness
       engineAccel = (Math.random() * 0.1 + 0.95) * engineAccel
