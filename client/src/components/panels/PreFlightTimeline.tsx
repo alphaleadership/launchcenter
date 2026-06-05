@@ -5,10 +5,13 @@ import { cn } from '../../utils/cn'
 export const PreFlightTimeline: React.FC = () => {
   const { telemetry, launcherDetails } = useTelemetry()
 
-  const config = launcherDetails[telemetry.launcher]
+  const config = launcherDetails[telemetry.launcher] || {
+    payloadMass: 10,
+    stages: [{ deltaV: 3000, burnTime: 150, fuelMass: 100, dryMass: 10 }]
+  }
 
   const flightEvents = React.useMemo(() => {
-    if (!config || !config.stages) return []
+    if (!config.stages) return []
     const evts = [
       { name: 'LIFT OFF', time: 0 },
       { name: 'MAX-Q', time: 60 }

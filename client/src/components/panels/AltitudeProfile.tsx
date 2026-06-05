@@ -6,8 +6,11 @@ export const AltitudeProfile: React.FC = () => {
   const { telemetry, launcherDetails } = useTelemetry()
 
   const theoreticalData = useMemo(() => {
-    const config = launcherDetails[telemetry.launcher]
-    if (!config || !config.stages) return []
+    const config = launcherDetails[telemetry.launcher] || {
+      payloadMass: 10,
+      stages: [{ deltaV: 3000, burnTime: 150, fuelMass: 100, dryMass: 10 }]
+    }
+    if (!config.stages) return []
 
     const stages = config.stages
     let met = 0
