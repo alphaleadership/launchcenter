@@ -127,12 +127,12 @@
   "Starship": {
     "stages": [
       {
-        "accel": 75,
-        "burn": 1.2
+        "accel": 160,
+        "burn": 2.0
       },
       {
-        "accel": 110,
-        "burn": 1.5
+        "accel": 240,
+        "burn": 2.8
       }
     ],
     "recycleTime": 40
