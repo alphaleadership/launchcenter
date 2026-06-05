@@ -66,6 +66,35 @@ let status: Record<string, string> = {}
 let manualLaunchTrigger = false
 let flightFinishedMet = -1
 let targetLaunchDateMs: number | null = null
+let irlLaunches: any[] = []
+
+async function fetchIRLLaunches() {
+  try {
+    console.log('🌍 Fetching IRL Launches data from TheSpaceDevs API...')
+    const res = await fetch('https://lldev.thespacedevs.com/2.2.0/launch/upcoming/?limit=15&mode=detailed')
+    const data = await res.json()
+    if (data.results && data.results.length > 0) {
+      const nowUnix = Math.floor(Date.now() / 1000)
+      // Keep only strictly future launches
+      irlLaunches = data.results.filter((l: any) => Math.floor(new Date(l.net).getTime() / 1000) > nowUnix)
+      console.log(`✅ Loaded ${irlLaunches.length} upcoming IRL launches`)
+      if (server) {
+        server.publish(
+          'houston-control',
+          JSON.stringify({
+            type: 'IRL_LAUNCHES_LIST',
+            payload: irlLaunches
+          })
+        )
+      }
+    }
+  } catch (err) {
+    console.error('❌ Failed to fetch IRL launches:', err)
+  }
+}
+
+fetchIRLLaunches()
+setInterval(fetchIRLLaunches, 5 * 60 * 1000) // Refresh every 5 minutes
 
 let telemetry = {
   altitude: 0,
@@ -322,6 +351,12 @@ server = Bun.serve({
       )
       ws.send(
         JSON.stringify({
+          type: 'IRL_LAUNCHES_LIST',
+          payload: irlLaunches
+        })
+      )
+      ws.send(
+        JSON.stringify({
           type: 'TELEMETRY',
           payload: telemetry
         })
@@ -397,39 +432,33 @@ server = Bun.serve({
           })
         )
       } else if (data.type === 'SYNC_IRL') {
-        console.log('🌍 Fetching IRL Launch data from TheSpaceDevs API...')
-        fetch('https://lldev.thespacedevs.com/2.2.0/launch/upcoming/?limit=5&mode=detailed')
-          .then((res) => res.json())
-          .then((data: any) => {
-            if (!data.results || data.results.length === 0) return
+        const launchId = data.payload
+        let launch = irlLaunches[0]
+        if (launchId) {
+          launch = irlLaunches.find((l: any) => l.id === launchId) || launch
+        }
 
-            const nowUnix = Math.floor(Date.now() / 1000)
-            let launch = data.results[0]
-            let launchDateUnix = Math.floor(new Date(launch.net).getTime() / 1000)
+        if (!launch) {
+          console.error('❌ No IRL launch available to sync')
+          return
+        }
 
-            // Find the first launch that is actually in the future
-            for (const l of data.results) {
-              const lDateUnix = Math.floor(new Date(l.net).getTime() / 1000)
-              if (lDateUnix > nowUnix) {
-                launch = l
-                launchDateUnix = lDateUnix
-                break
-              }
-            }
-            const diffSeconds = nowUnix - launchDateUnix
+        const nowUnix = Math.floor(Date.now() / 1000)
+        let launchDateUnix = Math.floor(new Date(launch.net).getTime() / 1000)
+        const diffSeconds = nowUnix - launchDateUnix
 
-            if (launch.rocket && launch.rocket.configuration && launch.rocket.configuration.name) {
-              // Try to match the exact name, or just use it even if not in DB (will fallback to 2 stages)
-              currentLauncher = launch.rocket.configuration.name
-            }
+        if (launch.rocket && launch.rocket.configuration && launch.rocket.configuration.name) {
+          // Try to match the exact name, or just use it even if not in DB (will fallback to 2 stages)
+          currentLauncher = launch.rocket.configuration.name
+        }
 
-            resetMission()
-            currentMission = `IRL: ${launch.name}`
-            telemetry.mission = currentMission
-            telemetry.countdown = diffSeconds
-            telemetry.isCounting = true
-            telemetry.hasLaunched = diffSeconds >= 0
-            telemetry.met = diffSeconds >= 0 ? diffSeconds : 0
+        resetMission()
+        currentMission = `IRL: ${launch.name}`
+        telemetry.mission = currentMission
+        telemetry.countdown = diffSeconds
+        telemetry.isCounting = true
+        telemetry.hasLaunched = diffSeconds >= 0
+        telemetry.met = diffSeconds >= 0 ? diffSeconds : 0
 
             let liveUrl = ''
             if (launch.vidURLs && launch.vidURLs.length > 0) {
@@ -485,8 +514,6 @@ server = Bun.serve({
                 payload: telemetry
               })
             )
-          })
-          .catch((err) => console.error('❌ Failed to fetch IRL launch:', err))
       }
     }
   }

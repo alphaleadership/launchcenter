@@ -41,12 +41,13 @@ interface TelemetryContextType {
   availableMissions: string[]
   history: HistoryPoint[]
   logs: LogEntry[]
+  irlLaunches: any[]
   setSystemStatus: (system: string, newStatus: string) => void
   selectLauncher: (launcher: string) => void
   selectMission: (mission: string) => void
   startCountdown: () => void
   holdCountdown: () => void
-  syncWithIRL: () => void
+  syncWithIRL: (launchId?: string) => void
   formatMET: (seconds: number) => string
   formatCountdown: (seconds: number) => string
 }
@@ -78,6 +79,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   })
   const [availableLaunchers, setAvailableLaunchers] = useState<string[]>([])
   const [availableMissions, setAvailableMissions] = useState<string[]>([])
+  const [irlLaunches, setIrlLaunches] = useState<any[]>([])
   const [history, setHistory] = useState<HistoryPoint[]>([])
   const [logs, setLogs] = useState<LogEntry[]>([])
   const ws = useRef<WebSocket | null>(null)
@@ -166,6 +168,8 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setAvailableLaunchers(data.payload.launchers)
         } else if (data.type === 'MISSIONS_LIST') {
           setAvailableMissions(data.payload.missions)
+        } else if (data.type === 'IRL_LAUNCHES_LIST') {
+          setIrlLaunches(data.payload)
         }
       }
 
@@ -241,10 +245,11 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     )
   }
 
-  const syncWithIRL = () => {
+  const syncWithIRL = (launchId?: string) => {
     ws.current?.send(
       JSON.stringify({
-        type: 'SYNC_IRL'
+        type: 'SYNC_IRL',
+        payload: launchId
       })
     )
   }
@@ -285,6 +290,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         availableMissions,
         history,
         logs,
+        irlLaunches,
         setSystemStatus,
         selectLauncher,
         selectMission,

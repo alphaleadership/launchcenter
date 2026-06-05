@@ -14,7 +14,8 @@ const AppContent: React.FC = () => {
     syncWithIRL,
     status,
     availableLaunchers,
-    selectLauncher
+    selectLauncher,
+    irlLaunches
   } = useTelemetry()
   const headerRef = useRef<HTMLDivElement>(null)
   const footerRef = useRef<HTMLDivElement>(null)
@@ -105,12 +106,20 @@ const AppContent: React.FC = () => {
                 {isAllGo ? '▶ INITIATE COUNTDOWN' : 'WAITING FOR ALL SYSTEMS GO'}
               </button>
 
-              <button
-                onClick={syncWithIRL}
-                className="px-4 py-2 border-2 font-bold transition-all border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) syncWithIRL(e.target.value)
+                }}
+                className="px-4 py-2 border-2 font-bold transition-all border-blue-500 bg-black text-blue-500 hover:bg-blue-500 hover:text-white cursor-pointer outline-none"
               >
-                🌍 SYNC IRL LAUNCH
-              </button>
+                <option value="" disabled>🌍 SYNC IRL LAUNCH...</option>
+                {irlLaunches.map((l: any) => (
+                  <option key={l.id} value={l.id} className="text-black bg-white">
+                    {l.name}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
