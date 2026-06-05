@@ -49,7 +49,8 @@ export const ObsOverlay: React.FC = () => {
         )} style={{
           left: `${overlayConfig.missionTransform?.x ?? 85}vw`,
           top: `${overlayConfig.missionTransform?.y ?? 70}vh`,
-          transform: `translate(-50%, -50%) scale(${(overlayConfig.missionTransform?.scale || 100) / 100})`
+          transform: `scale(${(overlayConfig.missionTransform?.scale || 100) / 100})`,
+          transformOrigin: 'top left'
         }}>
           <div className="bg-black/80 border-2 border-houston-green text-houston-green px-3 py-1.5 rounded-tl-lg rounded-br-lg shadow-[0_0_15px_rgba(0,255,0,0.2)] flex items-center gap-3">
             <span className="font-bold tracking-widest text-xs uppercase">
@@ -69,7 +70,8 @@ export const ObsOverlay: React.FC = () => {
         )} style={{
           left: `${overlayConfig.countdownTransform?.x ?? 85}vw`,
           top: `${overlayConfig.countdownTransform?.y ?? 80}vh`,
-          transform: `translate(-50%, -50%) scale(${(overlayConfig.countdownTransform?.scale || 100) / 100})`
+          transform: `scale(${(overlayConfig.countdownTransform?.scale || 100) / 100})`,
+          transformOrigin: 'top left'
         }}>
           <div
             className={cn(
@@ -99,7 +101,8 @@ export const ObsOverlay: React.FC = () => {
         )} style={{
           left: `${overlayConfig.statusTransform?.x ?? 85}vw`,
           top: `${overlayConfig.statusTransform?.y ?? 90}vh`,
-          transform: `translate(-50%, -50%) scale(${(overlayConfig.statusTransform?.scale || 100) / 100})`
+          transform: `scale(${(overlayConfig.statusTransform?.scale || 100) / 100})`,
+          transformOrigin: 'top left'
         }}>
           <div className="flex gap-2 items-center mt-0.5">
             <div
@@ -129,7 +132,8 @@ export const ObsOverlay: React.FC = () => {
         )} style={{
           left: `${overlayConfig.flightDataTransform?.x ?? 85}vw`,
           top: `${overlayConfig.flightDataTransform?.y ?? 80}vh`,
-          transform: `translate(-50%, -50%) scale(${(overlayConfig.flightDataTransform?.scale || 100) / 100})`
+          transform: `scale(${(overlayConfig.flightDataTransform?.scale || 100) / 100})`,
+          transformOrigin: 'top left'
         }}>
           <div className="bg-black/80 border-2 border-houston-green/50 px-4 py-2 rounded-xl flex gap-6 shadow-[0_0_10px_rgba(0,255,0,0.1)]">
             <div className="flex flex-col items-end">
@@ -154,7 +158,8 @@ export const ObsOverlay: React.FC = () => {
         )} style={{
           left: `${overlayConfig.checklistTransform?.x ?? 85}vw`,
           top: `${overlayConfig.checklistTransform?.y ?? 50}vh`,
-          transform: `translate(-50%, -50%) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})`
+          transform: `scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})`,
+          transformOrigin: 'top left'
         }}>
           <div className="bg-black/80 border-2 border-houston-muted p-2 rounded-xl flex flex-col gap-0.5 shadow-lg w-48">
             <div className="text-[9px] font-bold uppercase tracking-widest border-b border-houston-muted pb-1 mb-1 opacity-80">
@@ -196,7 +201,8 @@ export const ObsOverlay: React.FC = () => {
         )} style={{
           left: `${overlayConfig.checklistTransform?.x ?? 85}vw`,
           top: `${overlayConfig.checklistTransform?.y ?? 50}vh`,
-          transform: `translate(-50%, -50%) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})`
+          transform: `scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})`,
+          transformOrigin: 'top left'
         }}>
           <div className="bg-black/80 border-2 border-houston-green/50 p-2 rounded-xl flex flex-col gap-1 shadow-[0_0_10px_rgba(0,255,0,0.1)] w-80">
             <div className="text-[9px] font-bold uppercase tracking-widest border-b border-houston-green/30 pb-1 mb-1 text-houston-green opacity-80">
