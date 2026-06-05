@@ -110,19 +110,29 @@ export const ObsOverlay: React.FC = () => {
             <div className="text-[9px] font-bold uppercase tracking-widest border-b border-houston-muted pb-1 mb-1 opacity-80">
               GO / NO-GO POLL
             </div>
-            {Object.entries(status).map(([system, sysStatus]) => (
-              <div key={system} className="flex justify-between items-center text-xs">
-                <span className="font-bold">{system}</span>
-                <span className={cn(
-                  "px-1.5 py-px text-[10px] font-black rounded uppercase",
-                  sysStatus === 'GO' ? "bg-houston-green text-black" : "bg-red-500 text-white animate-pulse"
-                )}>
-                  {sysStatus}
-                </span>
-              </div>
-            ))}
-            {Object.keys(status).length === 0 && (
-              <div className="text-[10px] opacity-50 italic">Waiting for telemetry...</div>
+            {Object.keys(status).length > 0 ? (
+              Object.entries(status).map(([system, sysStatus]) => (
+                <div key={system} className="flex justify-between items-center text-xs">
+                  <span className="font-bold">{system}</span>
+                  <span className={cn(
+                    "px-1.5 py-px text-[10px] font-black rounded uppercase",
+                    sysStatus === 'GO' ? "bg-houston-green text-black" : "bg-red-500 text-white animate-pulse"
+                  )}>
+                    {sysStatus}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <>
+                {['GUIDANCE', 'GROUND', 'RANGE', 'WEATHER'].map((system) => (
+                  <div key={system} className="flex justify-between items-center text-xs opacity-50">
+                    <span className="font-bold">{system}</span>
+                    <span className="px-1.5 py-px text-[10px] font-black rounded uppercase bg-yellow-500 text-black">
+                      WAITING
+                    </span>
+                  </div>
+                ))}
+              </>
             )}
           </div>
         </div>
