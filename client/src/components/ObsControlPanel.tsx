@@ -17,7 +17,7 @@ export const ObsControlPanel: React.FC = () => {
 
   const TransformControls = ({ itemKey }: { itemKey: keyof typeof overlayConfig }) => {
     // @ts-ignore
-    const transform: { x: number, y: number, scale: number } = overlayConfig[itemKey] || { x: 0, y: 0, scale: 100 }
+    const transform: { x: number, y: number, scale: number } = overlayConfig[itemKey] || { x: 85, y: 50, scale: 100 }
     
     const update = (changes: any) => {
       updateOverlayConfig({ [itemKey]: { ...transform, ...changes } })
@@ -28,11 +28,11 @@ export const ObsControlPanel: React.FC = () => {
         <div className="grid grid-cols-3 gap-4">
           <label className="flex flex-col text-[10px] uppercase text-houston-muted">
             <span className="mb-1">Pos X ({transform.x}%)</span>
-            <input type="range" min="-100" max="100" value={transform.x} onChange={e => update({x: parseInt(e.target.value)})} className="accent-houston-green" />
+            <input type="range" min="0" max="100" value={transform.x} onChange={e => update({x: parseInt(e.target.value)})} className="accent-houston-green" />
           </label>
           <label className="flex flex-col text-[10px] uppercase text-houston-muted">
             <span className="mb-1">Pos Y ({transform.y}%)</span>
-            <input type="range" min="-100" max="100" value={transform.y} onChange={e => update({y: parseInt(e.target.value)})} className="accent-houston-green" />
+            <input type="range" min="0" max="100" value={transform.y} onChange={e => update({y: parseInt(e.target.value)})} className="accent-houston-green" />
           </label>
           <label className="flex flex-col text-[10px] uppercase text-houston-muted">
             <span className="mb-1">Scale ({transform.scale}%)</span>

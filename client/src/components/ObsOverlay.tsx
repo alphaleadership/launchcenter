@@ -37,18 +37,19 @@ export const ObsOverlay: React.FC = () => {
 
   // Overlay has a transparent background by default for OBS
   return (
-    <div className="w-screen h-screen bg-transparent overflow-hidden flex flex-col justify-end p-8 font-mono">
+    <div className="w-screen h-screen bg-transparent overflow-hidden relative font-mono">
       <div 
-        className="flex flex-col items-end gap-2 transition-transform duration-300"
-        style={{ transform: `scale(${(overlayConfig.overlayScale || 100) / 100})`, transformOrigin: 'bottom right' }}
+        className="w-full h-full relative transition-transform duration-300"
+        style={{ transform: `scale(${(overlayConfig.overlayScale || 100) / 100})`, transformOrigin: 'center' }}
       >
         {/* Mission Info Badge */}
         <div className={cn(
-          "transition-all duration-500 ease-in-out",
-          overlayConfig.showMission ? "opacity-100 max-h-20" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
+          "transition-all duration-500 ease-in-out absolute flex flex-col items-center justify-center",
+          overlayConfig.showMission ? "opacity-100" : "opacity-0 pointer-events-none"
         )} style={{
-          transform: overlayConfig.showMission ? `translate(${overlayConfig.missionTransform?.x || 0}vw, ${overlayConfig.missionTransform?.y || 0}vh) scale(${(overlayConfig.missionTransform?.scale || 100) / 100})` : 'scale(0.95)',
-          transformOrigin: 'bottom right'
+          left: `${overlayConfig.missionTransform?.x ?? 85}vw`,
+          top: `${overlayConfig.missionTransform?.y ?? 70}vh`,
+          transform: `translate(-50%, -50%) scale(${(overlayConfig.missionTransform?.scale || 100) / 100})`
         }}>
           <div className="bg-black/80 border-2 border-houston-green text-houston-green px-3 py-1.5 rounded-tl-lg rounded-br-lg shadow-[0_0_15px_rgba(0,255,0,0.2)] flex items-center gap-3">
             <span className="font-bold tracking-widest text-xs uppercase">
@@ -63,11 +64,12 @@ export const ObsOverlay: React.FC = () => {
 
         {/* Countdown Display */}
         <div className={cn(
-          "transition-all duration-500 ease-in-out",
-          overlayConfig.showCountdown ? "opacity-100 max-h-40" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
+          "transition-all duration-500 ease-in-out absolute flex flex-col items-center justify-center",
+          overlayConfig.showCountdown ? "opacity-100" : "opacity-0 pointer-events-none"
         )} style={{
-          transform: overlayConfig.showCountdown ? `translate(${overlayConfig.countdownTransform?.x || 0}vw, ${overlayConfig.countdownTransform?.y || 0}vh) scale(${(overlayConfig.countdownTransform?.scale || 100) / 100})` : 'scale(0.95)',
-          transformOrigin: 'bottom right'
+          left: `${overlayConfig.countdownTransform?.x ?? 85}vw`,
+          top: `${overlayConfig.countdownTransform?.y ?? 80}vh`,
+          transform: `translate(-50%, -50%) scale(${(overlayConfig.countdownTransform?.scale || 100) / 100})`
         }}>
           <div
             className={cn(
@@ -92,11 +94,12 @@ export const ObsOverlay: React.FC = () => {
 
         {/* Status Indicator */}
         <div className={cn(
-          "transition-all duration-500 ease-in-out",
-          overlayConfig.showStatus ? "opacity-100 max-h-10 mt-1" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
+          "transition-all duration-500 ease-in-out absolute flex flex-col items-center justify-center",
+          overlayConfig.showStatus ? "opacity-100" : "opacity-0 pointer-events-none"
         )} style={{
-          transform: overlayConfig.showStatus ? `translate(${overlayConfig.statusTransform?.x || 0}vw, ${overlayConfig.statusTransform?.y || 0}vh) scale(${(overlayConfig.statusTransform?.scale || 100) / 100})` : 'scale(0.95)',
-          transformOrigin: 'bottom right'
+          left: `${overlayConfig.statusTransform?.x ?? 85}vw`,
+          top: `${overlayConfig.statusTransform?.y ?? 90}vh`,
+          transform: `translate(-50%, -50%) scale(${(overlayConfig.statusTransform?.scale || 100) / 100})`
         }}>
           <div className="flex gap-2 items-center mt-0.5">
             <div
@@ -121,11 +124,12 @@ export const ObsOverlay: React.FC = () => {
 
         {/* Flight Data Display - Only shown after launch */}
         <div className={cn(
-          "transition-all duration-700 ease-in-out",
-          (telemetry.hasLaunched && overlayConfig.showFlightData) ? "opacity-100 max-h-32 mt-1.5" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
+          "transition-all duration-700 ease-in-out absolute flex flex-col items-center justify-center",
+          (telemetry.hasLaunched && overlayConfig.showFlightData) ? "opacity-100" : "opacity-0 pointer-events-none"
         )} style={{
-          transform: (telemetry.hasLaunched && overlayConfig.showFlightData) ? `translate(${overlayConfig.flightDataTransform?.x || 0}vw, ${overlayConfig.flightDataTransform?.y || 0}vh) scale(${(overlayConfig.flightDataTransform?.scale || 100) / 100})` : 'scale(0.95)',
-          transformOrigin: 'bottom right'
+          left: `${overlayConfig.flightDataTransform?.x ?? 85}vw`,
+          top: `${overlayConfig.flightDataTransform?.y ?? 80}vh`,
+          transform: `translate(-50%, -50%) scale(${(overlayConfig.flightDataTransform?.scale || 100) / 100})`
         }}>
           <div className="bg-black/80 border-2 border-houston-green/50 px-4 py-2 rounded-xl flex gap-6 shadow-[0_0_10px_rgba(0,255,0,0.1)]">
             <div className="flex flex-col items-end">
@@ -145,11 +149,12 @@ export const ObsOverlay: React.FC = () => {
 
         {/* System Checklist - Disappears at T-7s */}
         <div className={cn(
-          "transition-all duration-700 ease-in-out",
-          (overlayConfig.showChecklist && !telemetry.hasLaunched && (!telemetry.isCounting || telemetry.countdown < -7)) ? "opacity-100 max-h-96 mt-1.5" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
+          "transition-all duration-700 ease-in-out absolute flex flex-col items-center justify-center",
+          (overlayConfig.showChecklist && !telemetry.hasLaunched && (!telemetry.isCounting || telemetry.countdown < -7)) ? "opacity-100" : "opacity-0 pointer-events-none"
         )} style={{
-          transform: (overlayConfig.showChecklist && !telemetry.hasLaunched && (!telemetry.isCounting || telemetry.countdown < -7)) ? `translate(${overlayConfig.checklistTransform?.x || 0}vw, ${overlayConfig.checklistTransform?.y || 0}vh) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})` : 'scale(0.95)',
-          transformOrigin: 'bottom right'
+          left: `${overlayConfig.checklistTransform?.x ?? 85}vw`,
+          top: `${overlayConfig.checklistTransform?.y ?? 50}vh`,
+          transform: `translate(-50%, -50%) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})`
         }}>
           <div className="bg-black/80 border-2 border-houston-muted p-2 rounded-xl flex flex-col gap-0.5 shadow-lg w-48">
             <div className="text-[9px] font-bold uppercase tracking-widest border-b border-houston-muted pb-1 mb-1 opacity-80">
@@ -186,11 +191,12 @@ export const ObsOverlay: React.FC = () => {
 
         {/* Flight Timeline - Only shown after launch */}
         <div className={cn(
-          "transition-all duration-700 ease-in-out",
-          (overlayConfig.showChecklist && telemetry.hasLaunched) ? "opacity-100 max-h-96 mt-1.5" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
+          "transition-all duration-700 ease-in-out absolute flex flex-col items-center justify-center",
+          (overlayConfig.showChecklist && telemetry.hasLaunched) ? "opacity-100" : "opacity-0 pointer-events-none"
         )} style={{
-          transform: (overlayConfig.showChecklist && telemetry.hasLaunched) ? `translate(${overlayConfig.checklistTransform?.x || 0}vw, ${overlayConfig.checklistTransform?.y || 0}vh) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})` : 'scale(0.95)',
-          transformOrigin: 'bottom right'
+          left: `${overlayConfig.checklistTransform?.x ?? 85}vw`,
+          top: `${overlayConfig.checklistTransform?.y ?? 50}vh`,
+          transform: `translate(-50%, -50%) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})`
         }}>
           <div className="bg-black/80 border-2 border-houston-green/50 p-2 rounded-xl flex flex-col gap-1 shadow-[0_0_10px_rgba(0,255,0,0.1)] w-80">
             <div className="text-[9px] font-bold uppercase tracking-widest border-b border-houston-green/30 pb-1 mb-1 text-houston-green opacity-80">
