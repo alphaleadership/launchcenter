@@ -4,6 +4,7 @@ import { cn } from './utils/cn'
 import { TelemetryProvider, useTelemetry } from './context/TelemetryContext'
 import { FlexLayoutWrapper } from './components/FlexLayoutWrapper'
 import { ObsOverlay } from './components/ObsOverlay'
+import { ObsControlPanel } from './components/ObsControlPanel'
 
 const AppContent: React.FC = () => {
   const {
@@ -189,6 +190,14 @@ const AppContent: React.FC = () => {
       >
         <span>Terminal: JSC-MOC-2026-07-02</span>
         <div className="flex gap-4">
+          <a
+            href="/obs-control"
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-500 hover:text-white transition-colors"
+          >
+            [OBS CONTROL PANEL]
+          </a>
           <span className={cn(telemetry.isCounting && 'animate-pulse text-houston-green')}>
             {telemetry.isCounting ? '>> DATA_LINK_ACTIVE' : '|| DATA_LINK_STANDBY'}
           </span>
@@ -205,6 +214,14 @@ const App: React.FC = () => {
     return (
       <TelemetryProvider>
         <ObsOverlay />
+      </TelemetryProvider>
+    )
+  }
+
+  if (window.location.pathname === '/obs-control') {
+    return (
+      <TelemetryProvider>
+        <ObsControlPanel />
       </TelemetryProvider>
     )
   }

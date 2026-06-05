@@ -67,6 +67,12 @@ let manualLaunchTrigger = false
 let flightFinishedMet = -1
 let targetLaunchDateMs: number | null = null
 let irlLaunches: any[] = []
+let overlayConfig = {
+  showMission: true,
+  showCountdown: true,
+  showStatus: true,
+  showFlightData: true
+}
 
 async function fetchIRLLaunches() {
   try {
@@ -361,6 +367,12 @@ server = Bun.serve({
           payload: telemetry
         })
       )
+      ws.send(
+        JSON.stringify({
+          type: 'OVERLAY_CONFIG',
+          payload: overlayConfig
+        })
+      )
     },
     message(ws, message) {
       const data = JSON.parse(message)
@@ -412,6 +424,15 @@ server = Bun.serve({
           JSON.stringify({
             type: 'TELEMETRY',
             payload: telemetry
+          })
+        )
+      } else if (data.type === 'UPDATE_OVERLAY') {
+        overlayConfig = { ...overlayConfig, ...data.payload }
+        server.publish(
+          'houston-control',
+          JSON.stringify({
+            type: 'OVERLAY_CONFIG',
+            payload: overlayConfig
           })
         )
       } else if (data.type === 'SELECT_MISSION') {

@@ -22,6 +22,13 @@ export interface Status {
   [key: string]: string
 }
 
+export interface OverlayConfig {
+  showMission: boolean
+  showCountdown: boolean
+  showStatus: boolean
+  showFlightData: boolean
+}
+
 export interface HistoryPoint {
   time: number
   altitude: number
@@ -42,7 +49,9 @@ interface TelemetryContextType {
   history: HistoryPoint[]
   logs: LogEntry[]
   irlLaunches: any[]
+  overlayConfig: OverlayConfig
   setSystemStatus: (system: string, newStatus: string) => void
+  updateOverlayConfig: (config: Partial<OverlayConfig>) => void
   selectLauncher: (launcher: string) => void
   selectMission: (mission: string) => void
   startCountdown: () => void
@@ -82,9 +91,24 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [irlLaunches, setIrlLaunches] = useState<any[]>([])
   const [history, setHistory] = useState<HistoryPoint[]>([])
   const [logs, setLogs] = useState<LogEntry[]>([])
+  const [overlayConfig, setOverlayConfig] = useState<OverlayConfig>({
+    showMission: true,
+    showCountdown: true,
+    showStatus: true,
+    showFlightData: true
+  })
   const ws = useRef<WebSocket | null>(null)
   const prevTelemetry = useRef<Telemetry | null>(null)
   const connectedRef = useRef(false)
+
+  const updateOverlayConfig = (config: Partial<OverlayConfig>) => {
+    ws.current?.send(
+      JSON.stringify({
+        type: 'UPDATE_OVERLAY',
+        payload: config
+      })
+    )
+  }
 
   useEffect(() => {
     let reconnectTimeout: any;
@@ -170,6 +194,8 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setAvailableMissions(data.payload.missions)
         } else if (data.type === 'IRL_LAUNCHES_LIST') {
           setIrlLaunches(data.payload)
+        } else if (data.type === 'OVERLAY_CONFIG') {
+          setOverlayConfig(data.payload)
         }
       }
 
@@ -291,7 +317,9 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         history,
         logs,
         irlLaunches,
+        overlayConfig,
         setSystemStatus,
+        updateOverlayConfig,
         selectLauncher,
         selectMission,
         startCountdown,
