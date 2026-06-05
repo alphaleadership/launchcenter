@@ -47,7 +47,7 @@ export const ObsOverlay: React.FC = () => {
           "transition-all duration-500 ease-in-out",
           overlayConfig.showMission ? "opacity-100 max-h-20" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
         )} style={{
-          transform: overlayConfig.showMission ? `translate(${overlayConfig.missionTransform?.x || 0}px, ${overlayConfig.missionTransform?.y || 0}px) scale(${(overlayConfig.missionTransform?.scale || 100) / 100})` : 'scale(0.95)',
+          transform: overlayConfig.showMission ? `translate(${overlayConfig.missionTransform?.x || 0}vw, ${overlayConfig.missionTransform?.y || 0}vh) scale(${(overlayConfig.missionTransform?.scale || 100) / 100})` : 'scale(0.95)',
           transformOrigin: 'bottom right'
         }}>
           <div className="bg-black/80 border-2 border-houston-green text-houston-green px-3 py-1.5 rounded-tl-lg rounded-br-lg shadow-[0_0_15px_rgba(0,255,0,0.2)] flex items-center gap-3">
@@ -66,7 +66,7 @@ export const ObsOverlay: React.FC = () => {
           "transition-all duration-500 ease-in-out",
           overlayConfig.showCountdown ? "opacity-100 max-h-40" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
         )} style={{
-          transform: overlayConfig.showCountdown ? `translate(${overlayConfig.countdownTransform?.x || 0}px, ${overlayConfig.countdownTransform?.y || 0}px) scale(${(overlayConfig.countdownTransform?.scale || 100) / 100})` : 'scale(0.95)',
+          transform: overlayConfig.showCountdown ? `translate(${overlayConfig.countdownTransform?.x || 0}vw, ${overlayConfig.countdownTransform?.y || 0}vh) scale(${(overlayConfig.countdownTransform?.scale || 100) / 100})` : 'scale(0.95)',
           transformOrigin: 'bottom right'
         }}>
           <div
@@ -95,7 +95,7 @@ export const ObsOverlay: React.FC = () => {
           "transition-all duration-500 ease-in-out",
           overlayConfig.showStatus ? "opacity-100 max-h-10 mt-1" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
         )} style={{
-          transform: overlayConfig.showStatus ? `translate(${overlayConfig.statusTransform?.x || 0}px, ${overlayConfig.statusTransform?.y || 0}px) scale(${(overlayConfig.statusTransform?.scale || 100) / 100})` : 'scale(0.95)',
+          transform: overlayConfig.showStatus ? `translate(${overlayConfig.statusTransform?.x || 0}vw, ${overlayConfig.statusTransform?.y || 0}vh) scale(${(overlayConfig.statusTransform?.scale || 100) / 100})` : 'scale(0.95)',
           transformOrigin: 'bottom right'
         }}>
           <div className="flex gap-2 items-center mt-0.5">
@@ -124,7 +124,7 @@ export const ObsOverlay: React.FC = () => {
           "transition-all duration-700 ease-in-out",
           (telemetry.hasLaunched && overlayConfig.showFlightData) ? "opacity-100 max-h-32 mt-1.5" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
         )} style={{
-          transform: (telemetry.hasLaunched && overlayConfig.showFlightData) ? `translate(${overlayConfig.flightDataTransform?.x || 0}px, ${overlayConfig.flightDataTransform?.y || 0}px) scale(${(overlayConfig.flightDataTransform?.scale || 100) / 100})` : 'scale(0.95)',
+          transform: (telemetry.hasLaunched && overlayConfig.showFlightData) ? `translate(${overlayConfig.flightDataTransform?.x || 0}vw, ${overlayConfig.flightDataTransform?.y || 0}vh) scale(${(overlayConfig.flightDataTransform?.scale || 100) / 100})` : 'scale(0.95)',
           transformOrigin: 'bottom right'
         }}>
           <div className="bg-black/80 border-2 border-houston-green/50 px-4 py-2 rounded-xl flex gap-6 shadow-[0_0_10px_rgba(0,255,0,0.1)]">
@@ -148,7 +148,7 @@ export const ObsOverlay: React.FC = () => {
           "transition-all duration-700 ease-in-out",
           (overlayConfig.showChecklist && !telemetry.hasLaunched && (!telemetry.isCounting || telemetry.countdown < -7)) ? "opacity-100 max-h-96 mt-1.5" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
         )} style={{
-          transform: (overlayConfig.showChecklist && !telemetry.hasLaunched && (!telemetry.isCounting || telemetry.countdown < -7)) ? `translate(${overlayConfig.checklistTransform?.x || 0}px, ${overlayConfig.checklistTransform?.y || 0}px) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})` : 'scale(0.95)',
+          transform: (overlayConfig.showChecklist && !telemetry.hasLaunched && (!telemetry.isCounting || telemetry.countdown < -7)) ? `translate(${overlayConfig.checklistTransform?.x || 0}vw, ${overlayConfig.checklistTransform?.y || 0}vh) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})` : 'scale(0.95)',
           transformOrigin: 'bottom right'
         }}>
           <div className="bg-black/80 border-2 border-houston-muted p-2 rounded-xl flex flex-col gap-0.5 shadow-lg w-48">
@@ -189,7 +189,7 @@ export const ObsOverlay: React.FC = () => {
           "transition-all duration-700 ease-in-out",
           (overlayConfig.showChecklist && telemetry.hasLaunched) ? "opacity-100 max-h-96 mt-1.5" : "opacity-0 max-h-0 !m-0 overflow-hidden pointer-events-none"
         )} style={{
-          transform: (overlayConfig.showChecklist && telemetry.hasLaunched) ? `translate(${overlayConfig.checklistTransform?.x || 0}px, ${overlayConfig.checklistTransform?.y || 0}px) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})` : 'scale(0.95)',
+          transform: (overlayConfig.showChecklist && telemetry.hasLaunched) ? `translate(${overlayConfig.checklistTransform?.x || 0}vw, ${overlayConfig.checklistTransform?.y || 0}vh) scale(${(overlayConfig.checklistTransform?.scale || 100) / 100})` : 'scale(0.95)',
           transformOrigin: 'bottom right'
         }}>
           <div className="bg-black/80 border-2 border-houston-green/50 p-2 rounded-xl flex flex-col gap-1 shadow-[0_0_10px_rgba(0,255,0,0.1)] w-80">

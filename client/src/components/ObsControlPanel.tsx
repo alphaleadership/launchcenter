@@ -27,12 +27,12 @@ export const ObsControlPanel: React.FC = () => {
       <div className="flex flex-col gap-2 p-3 bg-black/30 border-x-2 border-b-2 border-houston-muted rounded-b -mt-1">
         <div className="grid grid-cols-3 gap-4">
           <label className="flex flex-col text-[10px] uppercase text-houston-muted">
-            <span className="mb-1">Pos X ({transform.x}px)</span>
-            <input type="range" min="-1920" max="1920" value={transform.x} onChange={e => update({x: parseInt(e.target.value)})} className="accent-houston-green" />
+            <span className="mb-1">Pos X ({transform.x}%)</span>
+            <input type="range" min="-100" max="100" value={transform.x} onChange={e => update({x: parseInt(e.target.value)})} className="accent-houston-green" />
           </label>
           <label className="flex flex-col text-[10px] uppercase text-houston-muted">
-            <span className="mb-1">Pos Y ({transform.y}px)</span>
-            <input type="range" min="-1080" max="1080" value={transform.y} onChange={e => update({y: parseInt(e.target.value)})} className="accent-houston-green" />
+            <span className="mb-1">Pos Y ({transform.y}%)</span>
+            <input type="range" min="-100" max="100" value={transform.y} onChange={e => update({y: parseInt(e.target.value)})} className="accent-houston-green" />
           </label>
           <label className="flex flex-col text-[10px] uppercase text-houston-muted">
             <span className="mb-1">Scale ({transform.scale}%)</span>
