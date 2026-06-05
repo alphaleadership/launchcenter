@@ -228,9 +228,11 @@ setInterval(() => {
     if (telemetry.met === 60) {
       console.log(`🌊 T+${formatMETForLog(telemetry.met)} - MAX-Q : Pression dynamique maximale atteinte !`)
     }
-    const config = LAUNCHERS[currentLauncher]
-    // Safe access to stages array in case config is invalid
-    const stages = config?.stages || [{ deltaV: 3000, burnTime: 150 }]
+    const config = LAUNCHERS[currentLauncher] || {
+      payloadMass: 10,
+      stages: [{ deltaV: 3000, burnTime: 150, fuelMass: 100, dryMass: 10 }]
+    }
+    const stages = config.stages
     const currentStageConfig = stages[Math.min(telemetry.stage - 1, stages.length - 1)]
 
     // Staging Logic
