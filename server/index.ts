@@ -71,7 +71,8 @@ let overlayConfig = {
   showMission: true,
   showCountdown: true,
   showStatus: true,
-  showFlightData: true
+  showFlightData: true,
+  showChecklist: true
 }
 
 async function fetchIRLLaunches() {

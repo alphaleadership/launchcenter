@@ -47,6 +47,11 @@ export const ObsControlPanel: React.FC = () => {
             checked={overlayConfig.showFlightData}
             onChange={(c) => updateOverlayConfig({ showFlightData: c })}
           />
+          <Toggle
+            label="Checklist Système (Auto-hide à T-7s)"
+            checked={overlayConfig.showChecklist}
+            onChange={(c) => updateOverlayConfig({ showChecklist: c })}
+          />
         </div>
 
         <div className="mt-12 text-xs text-houston-muted uppercase text-center">

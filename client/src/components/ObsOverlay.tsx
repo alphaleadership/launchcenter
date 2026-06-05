@@ -100,6 +100,32 @@ export const ObsOverlay: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* System Checklist - Disappears at T-7s */}
+        <div className={cn(
+          "transition-all duration-700 ease-in-out origin-bottom",
+          (overlayConfig.showChecklist && !telemetry.hasLaunched && (!telemetry.isCounting || telemetry.countdown < -7)) ? "opacity-100 scale-100 max-h-96 mt-2" : "opacity-0 scale-95 max-h-0 !m-0 overflow-hidden pointer-events-none"
+        )}>
+          <div className="bg-black/80 border-2 border-houston-muted p-3 rounded-xl flex flex-col gap-1 shadow-lg w-64">
+            <div className="text-[10px] font-bold uppercase tracking-widest border-b border-houston-muted pb-1 mb-1 opacity-80">
+              GO / NO-GO POLL
+            </div>
+            {Object.entries(status).map(([system, sysStatus]) => (
+              <div key={system} className="flex justify-between items-center text-sm">
+                <span className="font-bold">{system}</span>
+                <span className={cn(
+                  "px-2 py-0.5 text-xs font-black rounded uppercase",
+                  sysStatus === 'GO' ? "bg-houston-green text-black" : "bg-red-500 text-white animate-pulse"
+                )}>
+                  {sysStatus}
+                </span>
+              </div>
+            ))}
+            {Object.keys(status).length === 0 && (
+              <div className="text-xs opacity-50 italic">Waiting for telemetry...</div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
