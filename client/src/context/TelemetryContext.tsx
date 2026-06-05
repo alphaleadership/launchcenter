@@ -60,6 +60,7 @@ interface TelemetryContextType {
   selectMission: (mission: string) => void
   startCountdown: () => void
   holdCountdown: () => void
+  launcherDetails: Record<string, any>
   syncWithIRL: (launchId?: string) => void
   formatMET: (seconds: number) => string
   formatCountdown: (seconds: number) => string
@@ -95,6 +96,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [irlLaunches, setIrlLaunches] = useState<any[]>([])
   const [history, setHistory] = useState<HistoryPoint[]>([])
   const [logs, setLogs] = useState<LogEntry[]>([])
+  const [launcherDetails, setLauncherDetails] = useState<Record<string, any>>({})
   const [overlayConfig, setOverlayConfig] = useState<OverlayConfig>({
     showMission: true,
     showCountdown: true,
@@ -196,6 +198,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setStatus(data.payload)
         } else if (data.type === 'LAUNCHERS_LIST') {
           setAvailableLaunchers(data.payload.launchers)
+          setLauncherDetails(data.payload.details)
         } else if (data.type === 'MISSIONS_LIST') {
           setAvailableMissions(data.payload.missions)
         } else if (data.type === 'IRL_LAUNCHES_LIST') {
@@ -330,6 +333,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         selectMission,
         startCountdown,
         holdCountdown,
+        launcherDetails,
         syncWithIRL,
         formatMET,
         formatCountdown
