@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/bun'
-import { readFileSync, watch } from 'fs'
+import { readFileSync, writeFileSync, existsSync, watch } from 'fs'
 import { join } from 'path'
 
 const app = new Hono()
@@ -14,6 +14,7 @@ app.use('/*', serveStatic({ root: '../client/dist' }))
 app.get('*', serveStatic({ path: '../client/dist/index.html' }))
 const CONFIG_PATH = join(import.meta.dir, 'launchers.json')
 const MISSIONS_PATH = join(import.meta.dir, 'missions.json')
+const OVERLAY_CONFIG_PATH = join(import.meta.dir, 'overlay.json')
 let LAUNCHERS: any = {}
 let MISSIONS: any = {}
 
@@ -67,13 +68,21 @@ let manualLaunchTrigger = false
 let flightFinishedMet = -1
 let targetLaunchDateMs: number | null = null
 let irlLaunches: any[] = []
-let overlayConfig = {
+let overlayConfig: any = {
   showMission: true,
   showCountdown: true,
   showStatus: true,
   showFlightData: true,
   showChecklist: true,
   overlayScale: 100
+}
+
+try {
+  if (existsSync(OVERLAY_CONFIG_PATH)) {
+    overlayConfig = { ...overlayConfig, ...JSON.parse(readFileSync(OVERLAY_CONFIG_PATH, 'utf-8')) }
+  }
+} catch (err) {
+  console.error('❌ Failed to load overlay.json:', err)
 }
 
 async function fetchIRLLaunches() {
@@ -488,6 +497,11 @@ server = Bun.serve({
         server.publish('houston-control', telemetryPayloadStr)
       } else if (data.type === 'UPDATE_OVERLAY') {
         overlayConfig = { ...overlayConfig, ...data.payload }
+        try {
+          writeFileSync(OVERLAY_CONFIG_PATH, JSON.stringify(overlayConfig, null, 2))
+        } catch (err) {
+          console.error('❌ Failed to save overlay.json:', err)
+        }
         const configPayloadStr = JSON.stringify({
           type: 'OVERLAY_CONFIG',
           payload: overlayConfig
