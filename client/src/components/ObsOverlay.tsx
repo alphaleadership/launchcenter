@@ -115,11 +115,11 @@ export const ObsOverlay: React.FC = () => {
           <div className="bg-black/80 border-2 border-houston-green/50 px-4 py-2 rounded-xl flex gap-6 shadow-[0_0_10px_rgba(0,255,0,0.1)]">
             <div className="flex flex-col items-end">
               <span className="text-[9px] text-houston-green/80 font-bold uppercase tracking-widest">Altitude</span>
-              <span className="text-xl font-black tabular-nums text-white">{(telemetry.altitude / 1000).toFixed(1)} <span className="text-[10px] text-houston-green/80">km</span></span>
+              <span className="text-xl font-black tabular-nums text-white">{((telemetry.altitude || 0) / 1000).toFixed(1)} <span className="text-[10px] text-houston-green/80">km</span></span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[9px] text-houston-green/80 font-bold uppercase tracking-widest">Velocity</span>
-              <span className="text-xl font-black tabular-nums text-white">{Math.round(telemetry.velocity)} <span className="text-[10px] text-houston-green/80">km/h</span></span>
+              <span className="text-xl font-black tabular-nums text-white">{Math.round(telemetry.velocity || 0)} <span className="text-[10px] text-houston-green/80">km/h</span></span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[9px] text-houston-green/80 font-bold uppercase tracking-widest">Stage</span>
