@@ -111,6 +111,8 @@ let telemetry = {
   vx: 0,
   vy: 0,
   fuel: 100,
+  boostersFuel: 0,
+  hasBoosters: false,
   o2: 100,
   heartRate: 75,
   met: 0,
@@ -149,6 +151,8 @@ function resetMission() {
     vx: 0,
     vy: 0,
     fuel: 100,
+    boostersFuel: LAUNCHERS[currentLauncher]?.boosters ? 100 : 0,
+    hasBoosters: !!LAUNCHERS[currentLauncher]?.boosters,
     o2: 100,
     heartRate: 75,
     met: 0,
@@ -172,6 +176,9 @@ function resetMission() {
     GROUND: 'WAITING',
     RANGE: 'WAITING',
     WEATHER: 'WAITING'
+  }
+  if (LAUNCHERS[currentLauncher]?.boosters) {
+    status['BOOSTERS'] = 'WAITING'
   }
   for (let i = 1; i <= maxStages; i++) {
     status[`STAGE ${i}`] = 'WAITING'
@@ -218,7 +225,7 @@ setInterval(() => {
     telemetry.met += 1
     const config = LAUNCHERS[currentLauncher]
     // Safe access to stages array in case config is invalid
-    const stages = config?.stages || [{ accel: 50, burn: 5 }]
+    const stages = config?.stages || [{ deltaV: 3000, burnTime: 150 }]
     const currentStageConfig = stages[Math.min(telemetry.stage - 1, stages.length - 1)]
 
     // Staging Logic
@@ -234,14 +241,23 @@ setInterval(() => {
     const gravity = 9.81
 
     if (telemetry.fuel > 0) {
-      const engineAccel = (Math.random() * currentStageConfig.accel + 20) * 0.1 // scale down for tick
+      let engineAccel = currentStageConfig.deltaV / currentStageConfig.burnTime
+      
+      // Add booster acceleration if stage 1 and boosters are active
+      if (telemetry.stage === 1 && telemetry.hasBoosters && telemetry.boostersFuel > 0 && config.boosters) {
+        engineAccel += config.boosters.deltaV / config.boosters.burnTime
+        telemetry.boostersFuel = Math.max(0, telemetry.boostersFuel - (100 / config.boosters.burnTime))
+      }
+
+      // Add a little randomness
+      engineAccel = (Math.random() * 0.1 + 0.95) * engineAccel
 
       // Vector physics
       telemetry.vx += engineAccel * Math.cos(pitch)
       telemetry.vy += engineAccel * Math.sin(pitch) - gravity * 0.1
 
       // Fuel consumption
-      telemetry.fuel = Math.max(0, telemetry.fuel - currentStageConfig.burn)
+      telemetry.fuel = Math.max(0, telemetry.fuel - (100 / currentStageConfig.burnTime))
     } else {
       // Drifting, only gravity acts
       telemetry.vy -= gravity * 0.1

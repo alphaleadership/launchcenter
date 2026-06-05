@@ -5,6 +5,8 @@ export interface Telemetry {
   distance: number
   velocity: number
   fuel: number
+  boostersFuel?: number
+  hasBoosters?: boolean
   o2: number
   heartRate: number
   met: number

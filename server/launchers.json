@@ -1,139 +1,79 @@
 {
   "Falcon 9": {
     "stages": [
-      {
-        "accel": 55,
-        "burn": 0.5
-      },
-      {
-        "accel": 85,
-        "burn": 0.8
-      }
+      { "deltaV": 3000, "burnTime": 162 },
+      { "deltaV": 6500, "burnTime": 397 }
     ],
     "recycleTime": 600
   },
   "Falcon Heavy": {
+    "boosters": { "deltaV": 3000, "burnTime": 154 },
     "stages": [
-      {
-        "accel": 65,
-        "burn": 0.7
-      },
-      {
-        "accel": 95,
-        "burn": 0.9
-      }
+      { "deltaV": 3000, "burnTime": 250 },
+      { "deltaV": 6500, "burnTime": 397 }
     ],
     "recycleTime": 600
   },
   "SLS Block 1": {
+    "boosters": { "deltaV": 3500, "burnTime": 126 },
     "stages": [
-      {
-        "accel": 40,
-        "burn": 1.4
-      },
-      {
-        "accel": 110,
-        "burn": 1.1
-      }
+      { "deltaV": 5500, "burnTime": 480 },
+      { "deltaV": 3000, "burnTime": 1125 }
     ],
     "recycleTime": 600
   },
   "Vulcan Centaur": {
+    "boosters": { "deltaV": 2000, "burnTime": 90 },
     "stages": [
-      {
-        "accel": 48,
-        "burn": 0.5
-      },
-      {
-        "accel": 78,
-        "burn": 0.7
-      }
+      { "deltaV": 4500, "burnTime": 300 },
+      { "deltaV": 4000, "burnTime": 400 }
     ],
     "recycleTime": 600
   },
   "Atlas V 541": {
+    "boosters": { "deltaV": 1500, "burnTime": 94 },
     "stages": [
-      {
-        "accel": 45,
-        "burn": 0.6
-      },
-      {
-        "accel": 80,
-        "burn": 0.8
-      }
+      { "deltaV": 4500, "burnTime": 253 },
+      { "deltaV": 4500, "burnTime": 842 }
     ],
     "recycleTime": 600
   },
   "Electron": {
     "stages": [
-      {
-        "accel": 65,
-        "burn": 0.3
-      },
-      {
-        "accel": 95,
-        "burn": 0.5
-      }
+      { "deltaV": 2800, "burnTime": 150 },
+      { "deltaV": 5200, "burnTime": 330 },
+      { "deltaV": 1000, "burnTime": 60 }
     ],
     "recycleTime": 600
   },
   "Soyuz-2.1b": {
+    "boosters": { "deltaV": 2000, "burnTime": 118 },
     "stages": [
-      {
-        "accel": 35,
-        "burn": 1.1
-      },
-      {
-        "accel": 55,
-        "burn": 0.9
-      },
-      {
-        "accel": 130,
-        "burn": 1.3
-      }
+      { "deltaV": 3000, "burnTime": 286 },
+      { "deltaV": 4000, "burnTime": 240 }
     ],
     "recycleTime": 600
   },
   "Long March 6A": {
+    "boosters": { "deltaV": 2000, "burnTime": 115 },
     "stages": [
-      {
-        "accel": 60,
-        "burn": 0.6
-      },
-      {
-        "accel": 90,
-        "burn": 0.8
-      }
+      { "deltaV": 3500, "burnTime": 290 },
+      { "deltaV": 4000, "burnTime": 300 }
     ],
     "recycleTime": 600
   },
-  "South Korean Solid-Fuel SL": {
+  "South Korean Solid-Fuel SLV": {
     "stages": [
-      {
-        "accel": 75,
-        "burn": 1.2
-      },
-      {
-        "accel": 90,
-        "burn": 0.9
-      },
-      {
-        "accel": 110,
-        "burn": 0.7
-      }
+      { "deltaV": 2500, "burnTime": 100 },
+      { "deltaV": 3000, "burnTime": 120 },
+      { "deltaV": 3500, "burnTime": 140 }
     ],
     "recycleTime": 600
   },
   "Starship": {
     "stages": [
-      {
-        "accel": 160,
-        "burn": 2.0
-      },
-      {
-        "accel": 240,
-        "burn": 2.8
-      }
+      { "deltaV": 3500, "burnTime": 170 },
+      { "deltaV": 6000, "burnTime": 360 }
     ],
     "recycleTime": 40
   }
