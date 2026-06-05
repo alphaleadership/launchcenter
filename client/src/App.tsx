@@ -3,6 +3,7 @@ import { Rocket } from 'lucide-react'
 import { cn } from './utils/cn'
 import { TelemetryProvider, useTelemetry } from './context/TelemetryContext'
 import { FlexLayoutWrapper } from './components/FlexLayoutWrapper'
+import { ObsOverlay } from './components/ObsOverlay'
 
 const AppContent: React.FC = () => {
   const {
@@ -199,6 +200,15 @@ const AppContent: React.FC = () => {
 }
 
 const App: React.FC = () => {
+  // Simple router based on path
+  if (window.location.pathname === '/obs') {
+    return (
+      <TelemetryProvider>
+        <ObsOverlay />
+      </TelemetryProvider>
+    )
+  }
+
   return (
     <TelemetryProvider>
       <AppContent />
