@@ -76,5 +76,21 @@
       { "deltaV": 6000, "burnTime": 360 }
     ],
     "recycleTime": 40
+  },
+  "Ariane 62": {
+    "boosters": { "deltaV": 2000, "burnTime": 135 },
+    "stages": [
+      { "deltaV": 4000, "burnTime": 460 },
+      { "deltaV": 4500, "burnTime": 900 }
+    ],
+    "recycleTime": 600
+  },
+  "Ariane 64": {
+    "boosters": { "deltaV": 2800, "burnTime": 135 },
+    "stages": [
+      { "deltaV": 3500, "burnTime": 460 },
+      { "deltaV": 4500, "burnTime": 900 }
+    ],
+    "recycleTime": 600
   }
 }
