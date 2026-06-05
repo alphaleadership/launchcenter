@@ -58,6 +58,9 @@ export const SystemReadiness: React.FC = () => {
             </div>
           ))}
       </div>
+      <div className="text-[8px] text-gray-500 mt-2 break-all">
+        DEBUG: {JSON.stringify(status)}
+      </div>
     </div>
   )
 }

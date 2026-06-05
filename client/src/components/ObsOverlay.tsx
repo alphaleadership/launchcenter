@@ -3,7 +3,7 @@ import { useTelemetry } from '../context/TelemetryContext'
 import { cn } from '../utils/cn'
 
 export const ObsOverlay: React.FC = () => {
-  const { telemetry, formatCountdown, formatMET, overlayConfig } = useTelemetry()
+  const { telemetry, formatCountdown, formatMET, overlayConfig, status } = useTelemetry()
 
   const isFinalCountdown =
     !telemetry.hasLaunched && telemetry.countdown >= -10 && telemetry.isCounting
