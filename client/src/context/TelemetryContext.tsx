@@ -28,6 +28,7 @@ export interface OverlayConfig {
   showStatus: boolean
   showFlightData: boolean
   showChecklist: boolean
+  overlayScale?: number
 }
 
 export interface HistoryPoint {
@@ -97,7 +98,8 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     showCountdown: true,
     showStatus: true,
     showFlightData: true,
-    showChecklist: true
+    showChecklist: true,
+    overlayScale: 100
   })
   const ws = useRef<WebSocket | null>(null)
   const prevTelemetry = useRef<Telemetry | null>(null)

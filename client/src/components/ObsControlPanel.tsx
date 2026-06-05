@@ -54,6 +54,24 @@ export const ObsControlPanel: React.FC = () => {
           />
         </div>
 
+        <div className="mt-8 p-6 border-2 border-houston-muted rounded bg-black/50">
+          <label className="flex flex-col gap-4 cursor-pointer">
+            <div className="flex justify-between items-center">
+              <span className="font-bold tracking-widest uppercase text-sm">Échelle de l'Overlay (Taille)</span>
+              <span className="font-mono text-houston-green">{overlayConfig.overlayScale || 100}%</span>
+            </div>
+            <input
+              type="range"
+              min="50"
+              max="200"
+              step="5"
+              value={overlayConfig.overlayScale || 100}
+              onChange={(e) => updateOverlayConfig({ overlayScale: parseInt(e.target.value) })}
+              className="w-full accent-houston-green"
+            />
+          </label>
+        </div>
+
         <div className="mt-12 text-xs text-houston-muted uppercase text-center">
           Terminal de configuration OBS // NASA-JSC
         </div>

@@ -11,7 +11,10 @@ export const ObsOverlay: React.FC = () => {
   // Overlay has a transparent background by default for OBS
   return (
     <div className="w-screen h-screen bg-transparent overflow-hidden flex flex-col justify-end p-8 font-mono">
-      <div className="flex flex-col items-end gap-2">
+      <div 
+        className="flex flex-col items-end gap-2 transition-transform duration-300"
+        style={{ transform: `scale(${(overlayConfig.overlayScale || 100) / 100})`, transformOrigin: 'bottom right' }}
+      >
         {/* Mission Info Badge */}
         <div className={cn(
           "transition-all duration-500 ease-in-out origin-bottom",
