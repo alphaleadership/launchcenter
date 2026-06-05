@@ -15,6 +15,34 @@ export const ObsControlPanel: React.FC = () => {
     </label>
   )
 
+  const TransformControls = ({ label, itemKey }: { label: string, itemKey: keyof typeof overlayConfig }) => {
+    // @ts-ignore
+    const transform = overlayConfig[itemKey] || { x: 0, y: 0, scale: 100 }
+    
+    const update = (changes: any) => {
+      updateOverlayConfig({ [itemKey]: { ...transform, ...changes } })
+    }
+    
+    return (
+      <div className="flex flex-col gap-2 p-3 bg-black/30 border-x-2 border-b-2 border-houston-muted rounded-b -mt-1">
+        <div className="grid grid-cols-3 gap-4">
+          <label className="flex flex-col text-[10px] uppercase text-houston-muted">
+            <span className="mb-1">Pos X ({transform.x}px)</span>
+            <input type="range" min="-1920" max="1920" value={transform.x} onChange={e => update({x: parseInt(e.target.value)})} className="accent-houston-green" />
+          </label>
+          <label className="flex flex-col text-[10px] uppercase text-houston-muted">
+            <span className="mb-1">Pos Y ({transform.y}px)</span>
+            <input type="range" min="-1080" max="1080" value={transform.y} onChange={e => update({y: parseInt(e.target.value)})} className="accent-houston-green" />
+          </label>
+          <label className="flex flex-col text-[10px] uppercase text-houston-muted">
+            <span className="mb-1">Scale ({transform.scale}%)</span>
+            <input type="range" min="10" max="300" value={transform.scale} onChange={e => update({scale: parseInt(e.target.value)})} className="accent-houston-green" />
+          </label>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-houston-dark text-houston-green p-8 font-mono crt">
       <div className="max-w-2xl mx-auto">
@@ -27,31 +55,26 @@ export const ObsControlPanel: React.FC = () => {
         </p>
 
         <div className="flex flex-col gap-4">
-          <Toggle
-            label="Badge Mission & Lanceur"
-            checked={overlayConfig.showMission}
-            onChange={(c) => updateOverlayConfig({ showMission: c })}
-          />
-          <Toggle
-            label="Chronomètre / MET"
-            checked={overlayConfig.showCountdown}
-            onChange={(c) => updateOverlayConfig({ showCountdown: c })}
-          />
-          <Toggle
-            label="Indicateur de Statut (In Flight / Hold)"
-            checked={overlayConfig.showStatus}
-            onChange={(c) => updateOverlayConfig({ showStatus: c })}
-          />
-          <Toggle
-            label="Données de vol (Altitude, Vitesse) post-décollage"
-            checked={overlayConfig.showFlightData}
-            onChange={(c) => updateOverlayConfig({ showFlightData: c })}
-          />
-          <Toggle
-            label="Checklist Système (Auto-hide à T-7s)"
-            checked={overlayConfig.showChecklist}
-            onChange={(c) => updateOverlayConfig({ showChecklist: c })}
-          />
+          <div className="flex flex-col">
+            <Toggle label="Badge Mission & Lanceur" checked={overlayConfig.showMission} onChange={(c) => updateOverlayConfig({ showMission: c })} />
+            {overlayConfig.showMission && <TransformControls label="Badge" itemKey="missionTransform" />}
+          </div>
+          <div className="flex flex-col">
+            <Toggle label="Chronomètre / MET" checked={overlayConfig.showCountdown} onChange={(c) => updateOverlayConfig({ showCountdown: c })} />
+            {overlayConfig.showCountdown && <TransformControls label="Chronomètre" itemKey="countdownTransform" />}
+          </div>
+          <div className="flex flex-col">
+            <Toggle label="Indicateur de Statut (In Flight / Hold)" checked={overlayConfig.showStatus} onChange={(c) => updateOverlayConfig({ showStatus: c })} />
+            {overlayConfig.showStatus && <TransformControls label="Status" itemKey="statusTransform" />}
+          </div>
+          <div className="flex flex-col">
+            <Toggle label="Données de vol (Altitude, Vitesse)" checked={overlayConfig.showFlightData} onChange={(c) => updateOverlayConfig({ showFlightData: c })} />
+            {overlayConfig.showFlightData && <TransformControls label="Vol" itemKey="flightDataTransform" />}
+          </div>
+          <div className="flex flex-col">
+            <Toggle label="Checklist & Flight Timeline" checked={overlayConfig.showChecklist} onChange={(c) => updateOverlayConfig({ showChecklist: c })} />
+            {overlayConfig.showChecklist && <TransformControls label="Timeline" itemKey="checklistTransform" />}
+          </div>
         </div>
 
         <div className="mt-8 p-6 border-2 border-houston-muted rounded bg-black/50">

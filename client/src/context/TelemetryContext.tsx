@@ -24,6 +24,12 @@ export interface Status {
   [key: string]: string
 }
 
+export interface ItemTransform {
+  x: number
+  y: number
+  scale: number
+}
+
 export interface OverlayConfig {
   showMission: boolean
   showCountdown: boolean
@@ -31,6 +37,11 @@ export interface OverlayConfig {
   showFlightData: boolean
   showChecklist: boolean
   overlayScale?: number
+  missionTransform?: ItemTransform
+  countdownTransform?: ItemTransform
+  statusTransform?: ItemTransform
+  flightDataTransform?: ItemTransform
+  checklistTransform?: ItemTransform
 }
 
 export interface HistoryPoint {
