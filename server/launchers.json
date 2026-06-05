@@ -106,5 +106,22 @@
       }
     ],
     "recycleTime": 600
+  },
+  "South Korean Solid-Fuel SL": {
+    "stages": [
+      {
+        "accel": 75,
+        "burn": 1.2
+      },
+      {
+        "accel": 90,
+        "burn": 0.9
+      },
+      {
+        "accel": 110,
+        "burn": 0.7
+      }
+    ],
+    "recycleTime": 600
   }
 }

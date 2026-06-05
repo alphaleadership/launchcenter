@@ -65,6 +65,7 @@ let currentMission: string = 'LEO'
 let status: Record<string, string> = {}
 let manualLaunchTrigger = false
 let flightFinishedMet = -1
+let targetLaunchDateMs: number | null = null
 
 let telemetry = {
   altitude: 0,
@@ -126,6 +127,7 @@ function resetMission() {
 
   manualLaunchTrigger = false
   flightFinishedMet = -1
+  targetLaunchDateMs = null
 
   // Dynamic status generation
   status = {
@@ -154,11 +156,20 @@ setInterval(() => {
   if (!isLaunchReady && !telemetry.hasLaunched && telemetry.isCounting) {
     if (telemetry.countdown >= -recycleSeconds) {
       telemetry.isCounting = false
+      targetLaunchDateMs = null
     }
   }
 
   if (telemetry.isCounting && !telemetry.hasLaunched) {
     telemetry.countdown += 1
+    
+    // Affichage humain du countdown
+    if (telemetry.countdown <= 0 && (telemetry.countdown % 10 === 0 || telemetry.countdown >= -10)) {
+      if (!targetLaunchDateMs) targetLaunchDateMs = Date.now() - telemetry.countdown * 1000
+      const launchDate = new Date(targetLaunchDateMs)
+      console.log(`⏱️ ${formatCountdownForLog(telemetry.countdown)} (Lancement prévu le : ${launchDate.toLocaleString('fr-FR')})`)
+    }
+
     if (telemetry.countdown >= 0) {
       telemetry.hasLaunched = true
       telemetry.countdown = 0
@@ -249,6 +260,29 @@ function formatMETForLog(seconds: number) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+function formatCountdownForLog(seconds: number) {
+  const absSeconds = Math.abs(seconds)
+  const d = Math.floor(absSeconds / 86400)
+  const h = Math.floor((absSeconds % 86400) / 3600)
+  const m = Math.floor((absSeconds % 3600) / 60)
+  const s = absSeconds % 60
+  
+  const sign = seconds <= 0 ? 'T-' : 'T+'
+  
+  let result = ''
+  if (d > 0) {
+    result = `${d}d ${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`
+  } else if (h > 0) {
+    result = `${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`
+  } else if (m > 0) {
+    result = `${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`
+  } else {
+    result = `${s}s`
+  }
+
+  return `${sign}${result}`
+}
+
 // WebSocket with Bun
 server = Bun.serve({
   port: 3001,
@@ -315,14 +349,18 @@ server = Bun.serve({
           // If countdown is closer to 0 than -recycleSeconds, recycle it back to -recycleSeconds
           if (telemetry.countdown > -recycleSeconds && telemetry.countdown < 0) {
             telemetry.countdown = -recycleSeconds
-            console.log(`⏱️ Countdown recycled to T-${recycleSeconds}s`)
+            console.log(`⏱️ Countdown recycled to ${formatCountdownForLog(-recycleSeconds)}`)
           }
 
           telemetry.isCounting = true
+          targetLaunchDateMs = Date.now() - telemetry.countdown * 1000
           console.log('🏁 Countdown manual trigger received')
+          const launchDate = new Date(targetLaunchDateMs)
+          console.log(`📅 Lancement prévu le : ${launchDate.toLocaleString('fr-FR')}`)
         }
       } else if (data.type === 'HOLD_COUNTDOWN') {
         telemetry.isCounting = false
+        targetLaunchDateMs = null
         console.log('⏸ Countdown hold manual trigger received')
       } else if (data.type === 'SELECT_LAUNCHER') {
         currentLauncher = data.payload as keyof typeof LAUNCHERS
@@ -429,7 +467,9 @@ server = Bun.serve({
               status[key] = 'GO'
             }
 
-            console.log(`✅ Synced with IRL Launch: ${launch.name} (Countdown: ${diffSeconds}s)`)
+            targetLaunchDateMs = Date.now() - diffSeconds * 1000
+            const launchDate = new Date(targetLaunchDateMs)
+            console.log(`✅ Synced with IRL Launch: ${launch.name} (Countdown: ${formatCountdownForLog(diffSeconds)} - Prévu le: ${launchDate.toLocaleString('fr-FR')})`)
 
             server.publish(
               'houston-control',
