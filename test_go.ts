@@ -1,1 +1,6 @@
-const ws = new WebSocket('ws://localhost:3001/ws'); ws.onopen = () => { ws.send(JSON.stringify({type: 'GO_NO_GO', payload: {system: 'GUIDANCE', status: 'GO'}})); }; ws.onmessage = (e) => console.log('RCV:', e.data); setTimeout(() => process.exit(0), 1000);
+const ws = new WebSocket('ws://localhost:3001/ws')
+ws.onopen = () => {
+  ws.send(JSON.stringify({ type: 'GO_NO_GO', payload: { system: 'GUIDANCE', status: 'GO' } }))
+}
+ws.onmessage = (e) => console.log('RCV:', e.data)
+setTimeout(() => process.exit(0), 1000)

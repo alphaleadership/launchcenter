@@ -121,6 +121,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const connectedRef = useRef(false)
 
   const updateOverlayConfig = (config: Partial<OverlayConfig>) => {
+    setOverlayConfig((prev) => ({ ...prev, ...config }))
     ws.current?.send(
       JSON.stringify({
         type: 'UPDATE_OVERLAY',
@@ -130,7 +131,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }
 
   useEffect(() => {
-    let reconnectTimeout: any;
+    let reconnectTimeout: any
 
     const connect = () => {
       ws.current = new WebSocket('ws://localhost:3001/ws')
@@ -180,7 +181,10 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             })
           }
 
-          if (newTel.hasLaunched && (!prevTelemetry.current || !prevTelemetry.current.hasLaunched)) {
+          if (
+            newTel.hasLaunched &&
+            (!prevTelemetry.current || !prevTelemetry.current.hasLaunched)
+          ) {
             newLogs.push({
               time: '0:00:00:00',
               message: 'EVT: LIFT OFF CONFIRMED',
@@ -223,7 +227,11 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         connectedRef.current = false
         setLogs((prev) => [
           ...prev,
-          { time: '0:00:00:00', message: 'SYS: CONNECTION LOST, RECONNECTING...', color: 'text-red-500' }
+          {
+            time: '0:00:00:00',
+            message: 'SYS: CONNECTION LOST, RECONNECTING...',
+            color: 'text-red-500'
+          }
         ])
         reconnectTimeout = setTimeout(() => {
           connect()

@@ -88,12 +88,16 @@ try {
 async function fetchIRLLaunches() {
   try {
     console.log('🌍 Fetching IRL Launches data from TheSpaceDevs API...')
-    const res = await fetch('https://lldev.thespacedevs.com/2.2.0/launch/upcoming/?limit=15&mode=detailed')
+    const res = await fetch(
+      'https://lldev.thespacedevs.com/2.2.0/launch/upcoming/?limit=15&mode=detailed'
+    )
     const data = await res.json()
     if (data.results && data.results.length > 0) {
       const nowUnix = Math.floor(Date.now() / 1000)
       // Keep only strictly future launches
-      irlLaunches = data.results.filter((l: any) => Math.floor(new Date(l.net).getTime() / 1000) > nowUnix)
+      irlLaunches = data.results.filter(
+        (l: any) => Math.floor(new Date(l.net).getTime() / 1000) > nowUnix
+      )
       console.log(`✅ Loaded ${irlLaunches.length} upcoming IRL launches`)
       if (server) {
         server.publish(
@@ -215,27 +219,36 @@ setInterval(() => {
 
   if (telemetry.isCounting && !telemetry.hasLaunched) {
     telemetry.countdown += 1
-    
+
     // Affichage humain du countdown
-    if (telemetry.countdown <= 0 && (telemetry.countdown % 10 === 0 || telemetry.countdown >= -10)) {
+    if (
+      telemetry.countdown <= 0 &&
+      (telemetry.countdown % 10 === 0 || telemetry.countdown >= -10)
+    ) {
       if (!targetLaunchDateMs) targetLaunchDateMs = Date.now() - telemetry.countdown * 1000
       const launchDate = new Date(targetLaunchDateMs)
-      console.log(`⏱️ ${formatCountdownForLog(telemetry.countdown)} (Lancement prévu le : ${launchDate.toLocaleString('fr-FR')})`)
+      console.log(
+        `⏱️ ${formatCountdownForLog(telemetry.countdown)} (Lancement prévu le : ${launchDate.toLocaleString('fr-FR')})`
+      )
     }
 
     if (telemetry.countdown >= 0) {
       telemetry.hasLaunched = true
       telemetry.countdown = 0
       telemetry.met = 0
-      console.log(`\n🚀 LIFTOFF ! Décollage de ${currentLauncher} pour la mission ${currentMission}`)
+      console.log(
+        `\n🚀 LIFTOFF ! Décollage de ${currentLauncher} pour la mission ${currentMission}`
+      )
     }
   }
 
   if (telemetry.hasLaunched) {
     telemetry.met += 1
-    
+
     if (telemetry.met === 60) {
-      console.log(`🌊 T+${formatMETForLog(telemetry.met)} - MAX-Q : Pression dynamique maximale atteinte !`)
+      console.log(
+        `🌊 T+${formatMETForLog(telemetry.met)} - MAX-Q : Pression dynamique maximale atteinte !`
+      )
     }
     const config = LAUNCHERS[currentLauncher] || {
       payloadMass: 10,
@@ -246,8 +259,12 @@ setInterval(() => {
 
     // Staging Logic
     if (telemetry.fuel <= 0 && telemetry.stage < stages.length) {
-      console.log(`🔥 T+${formatMETForLog(telemetry.met)} - MECO : Coupure du moteur de l'étage ${telemetry.stage} !`)
-      console.log(`🔄 T+${formatMETForLog(telemetry.met)} - STAGE SEP : Séparation de l'étage ${telemetry.stage} confirmée !`)
+      console.log(
+        `🔥 T+${formatMETForLog(telemetry.met)} - MECO : Coupure du moteur de l'étage ${telemetry.stage} !`
+      )
+      console.log(
+        `🔄 T+${formatMETForLog(telemetry.met)} - STAGE SEP : Séparation de l'étage ${telemetry.stage} confirmée !`
+      )
       telemetry.stage += 1
       telemetry.fuel = 100
       telemetry.velocity += 150 // Separation kick
@@ -264,36 +281,48 @@ setInterval(() => {
       for (let i = telemetry.stage - 1; i < stages.length; i++) {
         M_init += stages[i].dryMass + stages[i].fuelMass
       }
-      
+
       let M_final = M_init - currentStageConfig.fuelMass
       // Effective exhaust velocity (Ve) derived from Delta-V
       const Ve_stage = currentStageConfig.deltaV / Math.log(M_init / M_final)
       const thrust_stage = (currentStageConfig.fuelMass / currentStageConfig.burnTime) * Ve_stage
 
       let totalThrust = thrust_stage
-      
+
       // Calculate current mass dynamically
       let currentMass = config.payloadMass || 0
       for (let i = telemetry.stage; i < stages.length; i++) {
         currentMass += stages[i].dryMass + stages[i].fuelMass
       }
-      currentMass += currentStageConfig.dryMass + (currentStageConfig.fuelMass * (telemetry.fuel / 100))
-      
+      currentMass +=
+        currentStageConfig.dryMass + currentStageConfig.fuelMass * (telemetry.fuel / 100)
+
       if (telemetry.stage === 1 && telemetry.hasBoosters && config.boosters) {
-        currentMass += config.boosters.dryMass + (config.boosters.fuelMass * (telemetry.boostersFuel / 100))
+        currentMass +=
+          config.boosters.dryMass + config.boosters.fuelMass * (telemetry.boostersFuel / 100)
       }
-      
-      if (telemetry.stage === 1 && telemetry.hasBoosters && telemetry.boostersFuel > 0 && config.boosters) {
+
+      if (
+        telemetry.stage === 1 &&
+        telemetry.hasBoosters &&
+        telemetry.boostersFuel > 0 &&
+        config.boosters
+      ) {
         let M_init_b = M_init + config.boosters.dryMass + config.boosters.fuelMass
         let M_final_b = M_init_b - config.boosters.fuelMass
         const Ve_booster = config.boosters.deltaV / Math.log(M_init_b / M_final_b)
         const thrust_booster = (config.boosters.fuelMass / config.boosters.burnTime) * Ve_booster
-        
+
         totalThrust += thrust_booster
-        telemetry.boostersFuel = Math.max(0, telemetry.boostersFuel - (100 / config.boosters.burnTime))
-        
+        telemetry.boostersFuel = Math.max(
+          0,
+          telemetry.boostersFuel - 100 / config.boosters.burnTime
+        )
+
         if (telemetry.boostersFuel <= 0) {
-          console.log(`💥 T+${formatMETForLog(telemetry.met)} - BECO : Extinction et séparation des boosters latéraux !`)
+          console.log(
+            `💥 T+${formatMETForLog(telemetry.met)} - BECO : Extinction et séparation des boosters latéraux !`
+          )
         }
       }
 
@@ -308,7 +337,7 @@ setInterval(() => {
       telemetry.vy += engineAccel * Math.sin(pitch) - gravity * 0.1
 
       // Fuel consumption
-      telemetry.fuel = Math.max(0, telemetry.fuel - (100 / currentStageConfig.burnTime))
+      telemetry.fuel = Math.max(0, telemetry.fuel - 100 / currentStageConfig.burnTime)
     } else {
       // Drifting, only gravity acts
       telemetry.vy -= gravity * 0.1
@@ -324,8 +353,12 @@ setInterval(() => {
     if (telemetry.fuel <= 0 && telemetry.stage >= stages.length) {
       if (flightFinishedMet === -1) {
         flightFinishedMet = telemetry.met
-        console.log(`🔥 T+${formatMETForLog(telemetry.met)} - SECO : Coupure du moteur du dernier étage !`)
-        console.log(`✨ T+${formatMETForLog(telemetry.met)} - ORBIT : Insertion en orbite réussie !`)
+        console.log(
+          `🔥 T+${formatMETForLog(telemetry.met)} - SECO : Coupure du moteur du dernier étage !`
+        )
+        console.log(
+          `✨ T+${formatMETForLog(telemetry.met)} - ORBIT : Insertion en orbite réussie !`
+        )
         console.log(
           `🏁 Flight finished! Orbit reached at MET ${formatMETForLog(telemetry.met)}. Resetting in 10s...\n`
         )
@@ -372,9 +405,9 @@ function formatCountdownForLog(seconds: number) {
   const h = Math.floor((absSeconds % 86400) / 3600)
   const m = Math.floor((absSeconds % 3600) / 60)
   const s = absSeconds % 60
-  
+
   const sign = seconds <= 0 ? 'T-' : 'T+'
-  
+
   let result = ''
   if (d > 0) {
     result = `${d}d ${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`
@@ -553,59 +586,61 @@ server = Bun.serve({
         telemetry.hasLaunched = diffSeconds >= 0
         telemetry.met = diffSeconds >= 0 ? diffSeconds : 0
 
-            let liveUrl = ''
-            if (launch.vidURLs && launch.vidURLs.length > 0) {
-              const tw = launch.vidURLs.find(
-                (v: any) => v.url.includes('twitter.com') || v.url.includes('x.com')
-              )
-              const yt = launch.vidURLs.find(
-                (v: any) => v.url.includes('youtube') || v.url.includes('youtu.be')
-              )
+        let liveUrl = ''
+        if (launch.vidURLs && launch.vidURLs.length > 0) {
+          const tw = launch.vidURLs.find(
+            (v: any) => v.url.includes('twitter.com') || v.url.includes('x.com')
+          )
+          const yt = launch.vidURLs.find(
+            (v: any) => v.url.includes('youtube') || v.url.includes('youtu.be')
+          )
 
-              if (tw) {
-                liveUrl = tw.url
-              } else if (yt) {
-                // Extract video ID and format as embed URL
-                const match = yt.url.match(
-                  /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/
-                )
-                if (match && match[1]) {
-                  liveUrl = `https://www.youtube.com/embed/${match[1]}?autoplay=1&mute=1`
-                } else {
-                  liveUrl = yt.url
-                }
-              } else {
-                // Just give the first URL if not youtube or twitter
-                liveUrl = launch.vidURLs[0].url
-              }
+          if (tw) {
+            liveUrl = tw.url
+          } else if (yt) {
+            // Extract video ID and format as embed URL
+            const match = yt.url.match(
+              /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/
+            )
+            if (match && match[1]) {
+              liveUrl = `https://www.youtube.com/embed/${match[1]}?autoplay=1&mute=1`
             } else {
-              // Fallback to youtube search if no video URL is provided yet
-              liveUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(launch.name + ' live stream')}`
+              liveUrl = yt.url
             }
-            telemetry.liveUrl = liveUrl
+          } else {
+            // Just give the first URL if not youtube or twitter
+            liveUrl = launch.vidURLs[0].url
+          }
+        } else {
+          // Fallback to youtube search if no video URL is provided yet
+          liveUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(launch.name + ' live stream')}`
+        }
+        telemetry.liveUrl = liveUrl
 
-            // Set all systems to GO for an IRL launch
-            for (let key in status) {
-              status[key] = 'GO'
-            }
+        // Set all systems to GO for an IRL launch
+        for (let key in status) {
+          status[key] = 'GO'
+        }
 
-            targetLaunchDateMs = Date.now() - diffSeconds * 1000
-            const launchDate = new Date(targetLaunchDateMs)
-            console.log(`✅ Synced with IRL Launch: ${launch.name} (Countdown: ${formatCountdownForLog(diffSeconds)} - Prévu le: ${launchDate.toLocaleString('fr-FR')})`)
+        targetLaunchDateMs = Date.now() - diffSeconds * 1000
+        const launchDate = new Date(targetLaunchDateMs)
+        console.log(
+          `✅ Synced with IRL Launch: ${launch.name} (Countdown: ${formatCountdownForLog(diffSeconds)} - Prévu le: ${launchDate.toLocaleString('fr-FR')})`
+        )
 
-            const statusPayloadStr = JSON.stringify({
-              type: 'STATUS_UPDATE',
-              payload: status
-            })
-            ws.send(statusPayloadStr)
-            server.publish('houston-control', statusPayloadStr)
+        const statusPayloadStr = JSON.stringify({
+          type: 'STATUS_UPDATE',
+          payload: status
+        })
+        ws.send(statusPayloadStr)
+        server.publish('houston-control', statusPayloadStr)
 
-            const telemetryPayloadStr = JSON.stringify({
-              type: 'TELEMETRY',
-              payload: telemetry
-            })
-            ws.send(telemetryPayloadStr)
-            server.publish('houston-control', telemetryPayloadStr)
+        const telemetryPayloadStr = JSON.stringify({
+          type: 'TELEMETRY',
+          payload: telemetry
+        })
+        ws.send(telemetryPayloadStr)
+        server.publish('houston-control', telemetryPayloadStr)
       }
     }
   }
