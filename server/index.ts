@@ -269,11 +269,11 @@ setInterval(() => {
           requestData: { title: title }
         }).catch(() => {})
 
-        // Try setting YouTube stream title via vendor request
+        // Try configuring YouTube stream title and privacy via vendor request
         await obs.call('CallVendorRequest', {
           vendorName: 'youtube',
-          requestType: 'update_channel',
-          requestData: { title: title }
+          requestType: 'configure_broadcast',
+          requestData: { title: title, privacy: isIRL ? 'public' : 'unlisted' }
         }).catch(() => {})
 
         // Try creating a YouTube broadcast via vendor request before launching
