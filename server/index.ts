@@ -98,6 +98,11 @@ async function connectObs() {
 obs.on('ConnectionClosed', () => {
   if (isObsConnected) console.log("🎥 Déconnecté d'OBS Studio")
   isObsConnected = false
+  obsLiveStarted = false
+})
+
+obs.on('StreamStateChanged', (data) => {
+  obsLiveStarted = data.outputActive
 })
 
 connectObs()
