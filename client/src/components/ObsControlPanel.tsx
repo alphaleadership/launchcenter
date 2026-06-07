@@ -6,12 +6,12 @@ export const ObsControlPanel: React.FC = () => {
   const { overlayConfig, updateOverlayConfig } = useTelemetry()
 
   const Toggle = ({ label, checked, onChange }: { label: string; checked: boolean; onChange: (c: boolean) => void }) => (
-    <label className="flex items-center justify-between p-4 border-2 border-houston-muted rounded hover:border-houston-green cursor-pointer transition-all bg-black/50">
+    <label className="flex items-center justify-between p-4 border-2 border-houston-muted rounded hover:border-houston-green focus-within:border-houston-green focus-within:ring-2 focus-within:ring-houston-green/40 cursor-pointer transition-all bg-black/50">
       <span className="font-bold tracking-widest uppercase text-sm">{label}</span>
       <div className={cn('w-12 h-6 rounded-full p-1 transition-colors', checked ? 'bg-houston-green' : 'bg-gray-800')}>
         <div className={cn('w-4 h-4 rounded-full bg-black transition-transform', checked ? 'translate-x-6' : 'translate-x-0')} />
       </div>
-      <input type="checkbox" className="hidden" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} aria-label={label} />
     </label>
   )
 

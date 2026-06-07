@@ -142,7 +142,7 @@ export const ObsOverlay: React.FC = () => {
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[9px] text-houston-green/80 font-bold uppercase tracking-widest">Velocity</span>
-              <span className="text-xl font-black tabular-nums text-white">{Math.round(telemetry.velocity || 0)} <span className="text-[10px] text-houston-green/80">km/h</span></span>
+              <span className="text-xl font-black tabular-nums text-white">{Math.round((telemetry.velocity || 0) * 3.6)} <span className="text-[10px] text-houston-green/80">km/h</span></span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[9px] text-houston-green/80 font-bold uppercase tracking-widest">Stage</span>
