@@ -260,33 +260,68 @@ setInterval(() => {
         title = title.replace('IRL: ', '') // Clean up title for real launches
       }
 
-      // Try setting Twitch stream title via vendor request
-      const twitchReq = obs.call('CallVendorRequest', {
-        vendorName: 'twitch',
-        requestType: 'update_channel',
-        requestData: { title: title }
-      }).catch(() => {})
+      ;(async () => {
+        // Try setting Twitch stream title via vendor request
+        await obs.call('CallVendorRequest', {
+          vendorName: 'twitch',
+          requestType: 'update_channel',
+          requestData: { title: title }
+        }).catch(() => {})
 
-      // Try creating a YouTube broadcast via vendor request before launching
-      const youtubeReq = obs.call('CallVendorRequest', {
-        vendorName: 'youtube',
-        requestType: 'create_broadcast',
-        requestData: { title: title, privacy: 'unlisted' }
-      }).catch(() => {})
-      
-      // Try setting a Text source in OBS if user uses that method
-      const textReq = obs.call('SetInputSettings', {
-        inputName: 'Titre Live',
-        inputSettings: { text: title }
-      }).catch(() => {})
+        // Try creating a YouTube broadcast via vendor request before launching
+        await obs.call('CallVendorRequest', {
+          vendorName: 'youtube',
+          requestType: 'create_broadcast',
+          requestData: { title: title, privacy: 'unlisted' }
+        }).catch(() => {})
+        
+        // Try setting a Text source in OBS if user uses that method
+        await obs.call('SetInputSettings', {
+          inputName: 'Titre Live',
+          inputSettings: { text: title }
+        }).catch(() => {})
 
-      Promise.all([twitchReq, youtubeReq, textReq]).then(() => {
-        return obs.call('StartStream')
-      }).then(() => {
+        // Make "flight data" source full screen
+        try {
+          const { currentProgramSceneName } = await obs.call('GetCurrentProgramScene')
+          const { sceneItems } = await obs.call('GetSceneItemList', { sceneName: currentProgramSceneName })
+          
+          const flightDataItem = sceneItems.find((item: any) => 
+            item.sourceName.toLowerCase() === 'flight data' || 
+            item.sourceName.toLowerCase() === 'fligth data'
+          )
+
+          if (flightDataItem) {
+            await obs.call('SetInputSettings', {
+              inputName: flightDataItem.sourceName,
+              inputSettings: { width: 1920, height: 1080 }
+            }).catch(() => {})
+
+            await obs.call('SetSceneItemTransform', {
+              sceneName: currentProgramSceneName,
+              sceneItemId: flightDataItem.sceneItemId,
+              sceneItemTransform: {
+                positionX: 0,
+                positionY: 0,
+                scaleX: 1,
+                scaleY: 1,
+                boundsType: 'OBS_BOUNDS_STRETCH',
+                boundsWidth: 1920,
+                boundsHeight: 1080
+              }
+            })
+          }
+        } catch (err) {
+          // Ignore if scene/items not found
+        }
+
+        await obs.call('StartStream')
         console.log(`🎥 Lancement automatique du live OBS avec le titre : "${title}"`)
-      }).catch((err) => {
+      })().catch((err) => {
         console.error('❌ Erreur lancement live OBS:', err.message)
       })
+
+
     }
 
     // Affichage humain du countdown
