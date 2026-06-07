@@ -269,19 +269,7 @@ setInterval(() => {
           requestData: { title: title }
         }).catch(() => {})
 
-        // Try configuring YouTube stream title and privacy via vendor request
-        await obs.call('CallVendorRequest', {
-          vendorName: 'youtube',
-          requestType: 'configure_broadcast',
-          requestData: { title: title, privacy: isIRL ? 'public' : 'unlisted' }
-        }).catch(() => {})
 
-        // Try creating a YouTube broadcast via vendor request before launching
-        await obs.call('CallVendorRequest', {
-          vendorName: 'youtube',
-          requestType: 'create_broadcast',
-          requestData: { title: title, privacy: isIRL ? 'public' : 'unlisted' }
-        }).catch(() => {})
         
         // Try setting a Text source in OBS if user uses that method
         await obs.call('SetInputSettings', {
