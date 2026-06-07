@@ -32,3 +32,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+server/youtube_token.json
+server/obs_hotkeys.json
+server/obs_requests.json
+server/protocol.md
+server/.env

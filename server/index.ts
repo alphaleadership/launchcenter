@@ -298,17 +298,19 @@ setInterval(() => {
             const broadcast = await createYouTubeLive(title, isIRL)
             currentBroadcastId = broadcast.broadcastId
 
-            // Envoyer la stream key YouTube dans OBS
+            // Injecter uniquement la clé et les IDs dans OBS, conserver le serveur RTMPS existant
             const currentSettings = await obs.call('GetStreamServiceSettings')
             await obs.call('SetStreamServiceSettings', {
               streamServiceType: currentSettings.streamServiceType,
               streamServiceSettings: {
                 ...currentSettings.streamServiceSettings,
                 key: broadcast.streamKey,
-                server: broadcast.ingestionAddress,
+                stream_id: broadcast.streamId,
+                broadcast_id: broadcast.broadcastId,
+                // NE PAS remplacer "server" - garder rtmps://a.rtmps.youtube.com:443/live2
               }
             })
-            console.log(`🎬 Diffusion YouTube créée et stream key injectée dans OBS`)
+            console.log(`🎬 Stream key injectée dans OBS → ${broadcast.streamKey}`)
           } catch (err: any) {
             console.error('❌ Erreur création diffusion YouTube:', err.message)
             currentBroadcastId = null
