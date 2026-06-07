@@ -422,6 +422,15 @@ setInterval(() => {
         console.log(
           `🏁 Flight finished! Orbit reached at MET ${formatMETForLog(telemetry.met)}. Resetting in 10s...\n`
         )
+
+        if (isObsConnected && obsLiveStarted) {
+          obs.call('StopStream').then(() => {
+            console.log(`⏹️ Arrêt automatique du live OBS (Fin de mission)`)
+            obsLiveStarted = false
+          }).catch((err) => {
+            console.error('❌ Erreur arrêt live OBS:', err.message)
+          })
+        }
       } else if (telemetry.met >= flightFinishedMet + 10) {
         console.log(`🔄 Automatically resetting mission...`)
         // If it was an IRL sync, reset the mission name to default to prevent loop
