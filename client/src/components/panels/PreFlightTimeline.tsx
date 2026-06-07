@@ -64,7 +64,7 @@ export const PreFlightTimeline: React.FC = () => {
             {telemetry.isCounting && !telemetry.hasLaunched && (
               <div
                 className="absolute -top-6 text-[10px] text-yellow-500 animate-pulse"
-                style={{ left: `${((telemetry.countdown + 30) / 30) * 100}%` }}
+                style={{ left: `${Math.max(0, Math.min(100, ((telemetry.countdown + 30) / 30) * 100))}%` }}
               >
                 ▼
               </div>

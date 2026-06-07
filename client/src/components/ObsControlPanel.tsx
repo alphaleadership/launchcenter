@@ -6,6 +6,7 @@ export const ObsControlPanel: React.FC = () => {
   const { overlayConfig, updateOverlayConfig } = useTelemetry()
   const [activeControl, setActiveControl] = useState<keyof typeof overlayConfig | null>(null)
 
+
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       // Don't intercept if user is typing in an input
@@ -55,7 +56,7 @@ export const ObsControlPanel: React.FC = () => {
     onFocusBlock?: () => void
   }) => (
     <label
-      className="flex items-center justify-between p-4 border-2 border-houston-muted rounded hover:border-houston-green cursor-pointer transition-all bg-black/50"
+      className="flex items-center justify-between p-4 border-2 border-houston-muted rounded hover:border-houston-green focus-within:border-houston-green focus-within:ring-2 focus-within:ring-houston-green/40 cursor-pointer transition-all bg-black/50"
       onClick={onFocusBlock}
     >
       <span className="font-bold tracking-widest uppercase text-sm">{label}</span>
@@ -74,9 +75,10 @@ export const ObsControlPanel: React.FC = () => {
       </div>
       <input
         type="checkbox"
-        className="hidden"
+        className="sr-only"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
+        aria-label={label}
       />
     </label>
   )

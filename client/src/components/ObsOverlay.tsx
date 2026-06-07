@@ -288,7 +288,7 @@ export const ObsOverlay: React.FC = () => {
                 Velocity
               </span>
               <span className="text-xl font-black tabular-nums text-white">
-                {Math.round(telemetry.velocity || 0)}{' '}
+                {Math.round((telemetry.velocity || 0) * 3.6)}{' '}
                 <span className="text-[10px] text-houston-green/80">km/h</span>
               </span>
             </div>

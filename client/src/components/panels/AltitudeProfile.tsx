@@ -76,7 +76,7 @@ export const AltitudeProfile: React.FC = () => {
       }
 
       met++
-      if (fuel <= 0 && stage > stages.length) {
+      if (fuel <= 0 && stage >= stages.length) {
         result.push({ distance: dist, altitude: alt })
         break
       }
