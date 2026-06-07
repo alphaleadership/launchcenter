@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/bun'
 import { readFileSync, writeFileSync, existsSync, watch } from 'fs'
 import { join } from 'path'
+import OBSWebSocket from 'obs-websocket-js'
 
 const app = new Hono()
 app.use('/status/*', cors())
@@ -40,7 +41,10 @@ function loadConfig() {
         'houston-control',
         JSON.stringify({
           type: 'LAUNCHERS_LIST',
-          payload: Object.keys(LAUNCHERS)
+          payload: {
+            launchers: Object.keys(LAUNCHERS),
+            details: LAUNCHERS
+          }
         })
       )
       server.publish(
@@ -76,6 +80,30 @@ let overlayConfig: any = {
   showChecklist: true,
   overlayScale: 100
 }
+
+let isObsConnected = false
+let obsLiveStarted = false
+const obs = new OBSWebSocket()
+
+async function connectObs() {
+  try {
+    await obs.connect('ws://127.0.0.1:4455')
+    isObsConnected = true
+    console.log('🎥 Connecté à OBS Studio')
+  } catch (error: any) {
+    // fail silently if OBS is not running
+  }
+}
+
+obs.on('ConnectionClosed', () => {
+  if (isObsConnected) console.log("🎥 Déconnecté d'OBS Studio")
+  isObsConnected = false
+})
+
+connectObs()
+setInterval(() => {
+  if (!isObsConnected) connectObs()
+}, 5000)
 
 try {
   if (existsSync(OVERLAY_CONFIG_PATH)) {
@@ -182,6 +210,7 @@ function resetMission() {
   manualLaunchTrigger = false
   flightFinishedMet = -1
   targetLaunchDateMs = null
+  obsLiveStarted = false
 
   // Dynamic status generation
   status = {
@@ -219,6 +248,16 @@ setInterval(() => {
 
   if (telemetry.isCounting && !telemetry.hasLaunched) {
     telemetry.countdown += 1
+
+    // Démarrage auto du live OBS à T-30 minutes
+    if (telemetry.countdown >= -1800 && telemetry.countdown < 0 && isObsConnected && !obsLiveStarted) {
+      obsLiveStarted = true
+      obs.call('StartStream').then(() => {
+        console.log('🎥 Lancement automatique du live OBS (T <= 30 mins) !')
+      }).catch((err) => {
+        console.error('❌ Erreur lancement live OBS:', err.message)
+      })
+    }
 
     // Affichage humain du countdown
     if (

@@ -13,7 +13,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "hono": "^4.11.8"
+    "hono": "^4.11.8",
+    "obs-websocket-js": "^5.0.8"
   },
-  "version": "0.0.11"
+  "version": "0.0.12"
 }
