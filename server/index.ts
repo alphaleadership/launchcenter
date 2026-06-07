@@ -254,7 +254,8 @@ setInterval(() => {
       obsLiveStarted = true
 
       let title = currentMission
-      if (!title.startsWith('IRL:')) {
+      const isIRL = title.startsWith('IRL:')
+      if (!isIRL) {
         title = `[LIVE DE TEST] ${title}`
       } else {
         title = title.replace('IRL: ', '') // Clean up title for real launches
@@ -272,7 +273,7 @@ setInterval(() => {
         await obs.call('CallVendorRequest', {
           vendorName: 'youtube',
           requestType: 'create_broadcast',
-          requestData: { title: title, privacy: 'unlisted' }
+          requestData: { title: title, privacy: isIRL ? 'public' : 'unlisted' }
         }).catch(() => {})
         
         // Try setting a Text source in OBS if user uses that method
