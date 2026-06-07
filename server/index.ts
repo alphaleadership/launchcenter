@@ -252,8 +252,29 @@ setInterval(() => {
     // Démarrage auto du live OBS à T-30 minutes
     if (telemetry.countdown >= -1800 && telemetry.countdown < 0 && isObsConnected && !obsLiveStarted) {
       obsLiveStarted = true
+
+      let title = currentMission
+      if (!title.startsWith('IRL:')) {
+        title = `[LIVE DE TEST] ${title}`
+      } else {
+        title = title.replace('IRL: ', '') // Clean up title for real launches
+      }
+
+      // Try setting Twitch stream title via vendor request
+      obs.call('CallVendorRequest', {
+        vendorName: 'twitch',
+        requestType: 'update_channel',
+        requestData: { title: title }
+      }).catch(() => {})
+      
+      // Try setting a Text source in OBS if user uses that method
+      obs.call('SetInputSettings', {
+        inputName: 'Titre Live',
+        inputSettings: { text: title }
+      }).catch(() => {})
+
       obs.call('StartStream').then(() => {
-        console.log('🎥 Lancement automatique du live OBS (T <= 30 mins) !')
+        console.log(`🎥 Lancement automatique du live OBS avec le titre : "${title}"`)
       }).catch((err) => {
         console.error('❌ Erreur lancement live OBS:', err.message)
       })
