@@ -444,8 +444,14 @@ setInterval(() => {
       // Fuel consumption
       telemetry.fuel = Math.max(0, telemetry.fuel - 100 / currentStageConfig.burnTime)
     } else {
-      // Drifting, only gravity acts
-      telemetry.vy -= gravity * 0.1
+      // Drifting
+      // If we are in orbit (final stage complete), gravity is counteracted by orbital velocity.
+      if (telemetry.stage < stages.length || telemetry.fuel > 0) {
+        telemetry.vy -= gravity * 0.1
+      } else {
+        // We are in orbit! Gently circularize the orbit (vy -> 0)
+        telemetry.vy *= 0.95
+      }
     }
 
     telemetry.velocity = Math.sqrt(telemetry.vx * telemetry.vx + telemetry.vy * telemetry.vy)
