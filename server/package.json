@@ -16,5 +16,5 @@
     "hono": "^4.11.8",
     "obs-websocket-js": "^5.0.8"
   },
-  "version": "0.0.21"
+  "version": "0.0.22"
 }
