@@ -261,19 +261,28 @@ setInterval(() => {
       }
 
       // Try setting Twitch stream title via vendor request
-      obs.call('CallVendorRequest', {
+      const twitchReq = obs.call('CallVendorRequest', {
         vendorName: 'twitch',
         requestType: 'update_channel',
         requestData: { title: title }
       }).catch(() => {})
+
+      // Try creating a YouTube broadcast via vendor request before launching
+      const youtubeReq = obs.call('CallVendorRequest', {
+        vendorName: 'youtube',
+        requestType: 'create_broadcast',
+        requestData: { title: title, privacy: 'unlisted' }
+      }).catch(() => {})
       
       // Try setting a Text source in OBS if user uses that method
-      obs.call('SetInputSettings', {
+      const textReq = obs.call('SetInputSettings', {
         inputName: 'Titre Live',
         inputSettings: { text: title }
       }).catch(() => {})
 
-      obs.call('StartStream').then(() => {
+      Promise.all([twitchReq, youtubeReq, textReq]).then(() => {
+        return obs.call('StartStream')
+      }).then(() => {
         console.log(`🎥 Lancement automatique du live OBS avec le titre : "${title}"`)
       }).catch((err) => {
         console.error('❌ Erreur lancement live OBS:', err.message)
