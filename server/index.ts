@@ -269,6 +269,13 @@ setInterval(() => {
           requestData: { title: title }
         }).catch(() => {})
 
+        // Try setting YouTube stream title via vendor request
+        await obs.call('CallVendorRequest', {
+          vendorName: 'youtube',
+          requestType: 'update_channel',
+          requestData: { title: title }
+        }).catch(() => {})
+
         // Try creating a YouTube broadcast via vendor request before launching
         await obs.call('CallVendorRequest', {
           vendorName: 'youtube',
@@ -315,6 +322,9 @@ setInterval(() => {
         } catch (err) {
           // Ignore if scene/items not found
         }
+
+        // Give OBS 5 seconds to detect the broadcast before starting the stream
+        await new Promise(resolve => setTimeout(resolve, 5000))
 
         await obs.call('StartStream')
         console.log(`🎥 Lancement automatique du live OBS avec le titre : "${title}"`)
