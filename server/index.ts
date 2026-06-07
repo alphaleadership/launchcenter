@@ -157,7 +157,7 @@ let telemetry = {
   o2: 100,
   heartRate: 75,
   met: 0,
-  countdown: -1800, // T-minus 30 minutes
+  countdown: -600, // Default to 10 mins before config load
   isCounting: false,
   hasLaunched: false,
   stage: 1,
@@ -197,7 +197,7 @@ function resetMission() {
     o2: 100,
     heartRate: 75,
     met: 0,
-    countdown: -1800,
+    countdown: -(LAUNCHERS[currentLauncher]?.recycleTime || 600),
     isCounting: false,
     hasLaunched: false,
     stage: 1,
