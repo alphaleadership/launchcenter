@@ -2,8 +2,8 @@ import { google } from 'googleapis'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join } from 'path'
 
-const CLIENT_ID = process.env.YOUTUBE_CLIENT_ID || ''
-const CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET || ''
+const CLIENT_ID = (process.env.YOUTUBE_CLIENT_ID || '').trim()
+const CLIENT_SECRET = (process.env.YOUTUBE_CLIENT_SECRET || '').trim()
 const REDIRECT_URI = 'http://localhost:3001/oauth2callback'
 const TOKEN_PATH = join(import.meta.dir, 'youtube_token.json')
 const SCOPES = ['https://www.googleapis.com/auth/youtube']

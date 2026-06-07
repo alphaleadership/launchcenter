@@ -9,11 +9,8 @@ import { getAuthUrl, handleOAuthCallback, isAuthenticated, createYouTubeLive, en
 const app = new Hono()
 app.use('/status/*', cors())
 app.use('/telemetry/*', cors())
-
-// Serve static files from the React app build
-app.use('/*', serveStatic({ root: '../client/dist' }))
-// Fallback for SPA routing
-app.get('*', serveStatic({ path: '../client/dist/index.html' }))
+app.use('/youtube/*', cors())
+app.use('/oauth2callback', cors())
 const CONFIG_PATH = join(import.meta.dir, 'launchers.json')
 const MISSIONS_PATH = join(import.meta.dir, 'missions.json')
 const OVERLAY_CONFIG_PATH = join(import.meta.dir, 'overlay.json')
@@ -259,6 +256,11 @@ app.get('/oauth2callback', async (c) => {
 app.get('/youtube/status', (c) => {
   return c.json({ authenticated: isAuthenticated(), broadcastId: currentBroadcastId })
 })
+
+// Serve static files from the React app build (AFTER API routes)
+app.use('/*', serveStatic({ root: '../client/dist' }))
+// Fallback for SPA routing
+app.get('*', serveStatic({ path: '../client/dist/index.html' }))
 
 // Simulation Loop
 setInterval(() => {
