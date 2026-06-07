@@ -4,6 +4,7 @@ import { serveStatic } from 'hono/bun'
 import { readFileSync, writeFileSync, existsSync, watch } from 'fs'
 import { join } from 'path'
 import OBSWebSocket from 'obs-websocket-js'
+import { getAuthUrl, handleOAuthCallback, isAuthenticated, createYouTubeLive, endYouTubeLive } from './youtube'
 
 const app = new Hono()
 app.use('/status/*', cors())
@@ -83,6 +84,7 @@ let overlayConfig: any = {
 
 let isObsConnected = false
 let obsLiveStarted = false
+let currentBroadcastId: string | null = null
 const obs = new OBSWebSocket()
 
 async function connectObs() {
@@ -237,6 +239,27 @@ function resetMission() {
 app.get('/status', (c) => c.json(status))
 app.get('/telemetry', (c) => c.json(telemetry))
 
+// ── Routes YouTube OAuth ──────────────────────────────────────────────────────
+app.get('/youtube/auth', (c) => {
+  const url = getAuthUrl()
+  return c.redirect(url)
+})
+
+app.get('/oauth2callback', async (c) => {
+  const code = c.req.query('code')
+  if (!code) return c.text('Code manquant', 400)
+  try {
+    await handleOAuthCallback(code)
+    return c.html('<h2>✅ YouTube connecté ! Vous pouvez fermer cet onglet.</h2>')
+  } catch (err: any) {
+    return c.text(`Erreur: ${err.message}`, 500)
+  }
+})
+
+app.get('/youtube/status', (c) => {
+  return c.json({ authenticated: isAuthenticated(), broadcastId: currentBroadcastId })
+})
+
 // Simulation Loop
 setInterval(() => {
   const isLaunchReady = Object.values(status).every((s) => s === 'GO')
@@ -254,7 +277,7 @@ setInterval(() => {
   if (telemetry.isCounting && !telemetry.hasLaunched) {
     telemetry.countdown += 1
 
-    // Démarrage auto du live OBS à T-30 minutes
+    // Démarrage auto du live OBS à T-30 minutes (ou au début du recycleTime si < 30min)
     if (telemetry.countdown >= -1800 && telemetry.countdown < 0 && isObsConnected && !obsLiveStarted) {
       obsLiveStarted = true
 
@@ -263,69 +286,77 @@ setInterval(() => {
       if (!isIRL) {
         title = `[LIVE DE TEST] ${title}`
       } else {
-        title = title.replace('IRL: ', '') // Clean up title for real launches
+        title = title.replace('IRL: ', '')
       }
 
       ;(async () => {
-        // Try setting Twitch stream title via vendor request
+        // ── 1. Créer la diffusion YouTube si authentifié ──────────────────────
+        if (isAuthenticated()) {
+          try {
+            const broadcast = await createYouTubeLive(title, isIRL)
+            currentBroadcastId = broadcast.broadcastId
+
+            // Envoyer la stream key YouTube dans OBS
+            const currentSettings = await obs.call('GetStreamServiceSettings')
+            await obs.call('SetStreamServiceSettings', {
+              streamServiceType: currentSettings.streamServiceType,
+              streamServiceSettings: {
+                ...currentSettings.streamServiceSettings,
+                key: broadcast.streamKey,
+                server: broadcast.ingestionAddress,
+              }
+            })
+            console.log(`🎬 Diffusion YouTube créée et stream key injectée dans OBS`)
+          } catch (err: any) {
+            console.error('❌ Erreur création diffusion YouTube:', err.message)
+            currentBroadcastId = null
+          }
+        }
+
+        // ── 2. Mettre à jour le texte titre dans OBS ──────────────────────────
         await obs.call('CallVendorRequest', {
           vendorName: 'twitch',
           requestType: 'update_channel',
-          requestData: { title: title }
+          requestData: { title }
         }).catch(() => {})
 
-
-        
-        // Try setting a Text source in OBS if user uses that method
         await obs.call('SetInputSettings', {
           inputName: 'Titre Live',
           inputSettings: { text: title }
         }).catch(() => {})
 
-        // Make "flight data" source full screen
+        // ── 3. Mettre la source "Flight Data" en plein écran ──────────────────
         try {
           const { currentProgramSceneName } = await obs.call('GetCurrentProgramScene')
           const { sceneItems } = await obs.call('GetSceneItemList', { sceneName: currentProgramSceneName })
-          
-          const flightDataItem = sceneItems.find((item: any) => 
-            item.sourceName.toLowerCase() === 'flight data' || 
+          const flightDataItem = sceneItems.find((item: any) =>
+            item.sourceName.toLowerCase() === 'flight data' ||
             item.sourceName.toLowerCase() === 'fligth data'
           )
-
           if (flightDataItem) {
             await obs.call('SetInputSettings', {
               inputName: flightDataItem.sourceName,
               inputSettings: { width: 1920, height: 1080 }
             }).catch(() => {})
-
             await obs.call('SetSceneItemTransform', {
               sceneName: currentProgramSceneName,
               sceneItemId: flightDataItem.sceneItemId,
               sceneItemTransform: {
-                positionX: 0,
-                positionY: 0,
-                scaleX: 1,
-                scaleY: 1,
-                boundsType: 'OBS_BOUNDS_STRETCH',
-                boundsWidth: 1920,
-                boundsHeight: 1080
+                positionX: 0, positionY: 0, scaleX: 1, scaleY: 1,
+                boundsType: 'OBS_BOUNDS_STRETCH', boundsWidth: 1920, boundsHeight: 1080
               }
             })
           }
-        } catch (err) {
-          // Ignore if scene/items not found
-        }
+        } catch { /* Ignore if scene/items not found */ }
 
-        // Give OBS 5 seconds to detect the broadcast before starting the stream
-        await new Promise(resolve => setTimeout(resolve, 5000))
-
+        // ── 4. Lancer le stream dans OBS ──────────────────────────────────────
+        await new Promise(resolve => setTimeout(resolve, 3000))
         await obs.call('StartStream')
-        console.log(`🎥 Lancement automatique du live OBS avec le titre : "${title}"`)
+        console.log(`🎥 Live OBS démarré : "${title}"`)
       })().catch((err) => {
+        obsLiveStarted = false
         console.error('❌ Erreur lancement live OBS:', err.message)
       })
-
-
     }
 
     // Affichage humain du countdown
@@ -478,9 +509,14 @@ setInterval(() => {
         )
 
         if (isObsConnected && obsLiveStarted) {
-          obs.call('StopStream').then(() => {
+          obs.call('StopStream').then(async () => {
             console.log(`⏹️ Arrêt automatique du live OBS (Fin de mission)`)
             obsLiveStarted = false
+            // Terminer la diffusion YouTube si elle a été créée par nous
+            if (currentBroadcastId) {
+              await endYouTubeLive(currentBroadcastId)
+              currentBroadcastId = null
+            }
           }).catch((err) => {
             console.error('❌ Erreur arrêt live OBS:', err.message)
           })
