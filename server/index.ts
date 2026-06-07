@@ -157,7 +157,7 @@ let telemetry = {
   o2: 100,
   heartRate: 75,
   met: 0,
-  countdown: -30, // T-minus 30 seconds
+  countdown: -1800, // T-minus 30 minutes
   isCounting: false,
   hasLaunched: false,
   stage: 1,
@@ -197,7 +197,7 @@ function resetMission() {
     o2: 100,
     heartRate: 75,
     met: 0,
-    countdown: -30,
+    countdown: -1800,
     isCounting: false,
     hasLaunched: false,
     stage: 1,
