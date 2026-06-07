@@ -1,0 +1,1 @@
+const ws = new WebSocket('ws://localhost:3001/ws'); ws.addEventListener('message', e => { console.log('MSG:', e.data); }); ws.addEventListener('open', () => { console.log('OPEN'); setTimeout(() => process.exit(0), 2000); });

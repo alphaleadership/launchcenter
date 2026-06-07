@@ -3,6 +3,8 @@ import { Rocket } from 'lucide-react'
 import { cn } from './utils/cn'
 import { TelemetryProvider, useTelemetry } from './context/TelemetryContext'
 import { FlexLayoutWrapper } from './components/FlexLayoutWrapper'
+import { ObsOverlay } from './components/ObsOverlay'
+import { ObsControlPanel } from './components/ObsControlPanel'
 
 const AppContent: React.FC = () => {
   const {
@@ -12,7 +14,10 @@ const AppContent: React.FC = () => {
     startCountdown,
     holdCountdown,
     syncWithIRL,
-    status
+    status,
+    availableLaunchers,
+    selectLauncher,
+    irlLaunches
   } = useTelemetry()
   const headerRef = useRef<HTMLDivElement>(null)
   const footerRef = useRef<HTMLDivElement>(null)
@@ -77,7 +82,19 @@ const AppContent: React.FC = () => {
           </div>
 
           {!telemetry.hasLaunched && !telemetry.isCounting && (
-            <div className="flex gap-4">
+            <div className="flex items-center gap-4">
+              <select
+                value={telemetry.launcher}
+                onChange={(e) => selectLauncher(e.target.value)}
+                className="bg-black border-2 border-houston-muted text-houston-green px-3 py-2 font-bold uppercase outline-none focus:border-houston-green cursor-pointer transition-colors"
+              >
+                {availableLaunchers.map((launcher) => (
+                  <option key={launcher} value={launcher}>
+                    {launcher}
+                  </option>
+                ))}
+              </select>
+
               <button
                 onClick={startCountdown}
                 disabled={!isAllGo}
@@ -91,12 +108,20 @@ const AppContent: React.FC = () => {
                 {isAllGo ? '▶ INITIATE COUNTDOWN' : 'WAITING FOR ALL SYSTEMS GO'}
               </button>
 
-              <button
-                onClick={syncWithIRL}
-                className="px-4 py-2 border-2 font-bold transition-all border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) syncWithIRL(e.target.value)
+                }}
+                className="px-4 py-2 border-2 font-bold transition-all border-blue-500 bg-black text-blue-500 hover:bg-blue-500 hover:text-white cursor-pointer outline-none"
               >
-                🌍 SYNC IRL LAUNCH
-              </button>
+                <option value="" disabled>🌍 SYNC IRL LAUNCH...</option>
+                {irlLaunches.map((l: any) => (
+                  <option key={l.id} value={l.id} className="text-black bg-white">
+                    {l.name}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -165,6 +190,14 @@ const AppContent: React.FC = () => {
       >
         <span>Terminal: JSC-MOC-2026-07-02</span>
         <div className="flex gap-4">
+          <a
+            href="/obs-control"
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-500 hover:text-white transition-colors"
+          >
+            [OBS CONTROL PANEL]
+          </a>
           <span className={cn(telemetry.isCounting && 'animate-pulse text-houston-green')}>
             {telemetry.isCounting ? '>> DATA_LINK_ACTIVE' : '|| DATA_LINK_STANDBY'}
           </span>
@@ -176,6 +209,23 @@ const AppContent: React.FC = () => {
 }
 
 const App: React.FC = () => {
+  // Simple router based on path
+  if (window.location.pathname === '/obs') {
+    return (
+      <TelemetryProvider>
+        <ObsOverlay />
+      </TelemetryProvider>
+    )
+  }
+
+  if (window.location.pathname === '/obs-control') {
+    return (
+      <TelemetryProvider>
+        <ObsControlPanel />
+      </TelemetryProvider>
+    )
+  }
+
   return (
     <TelemetryProvider>
       <AppContent />

@@ -22,6 +22,21 @@ export const Consumables: React.FC = () => {
           </div>
         </div>
 
+        {telemetry.hasBoosters && telemetry.stage === 1 && (
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span>BOOSTERS FUEL</span>
+              <span className="tabular-nums">{(telemetry.boostersFuel ?? 0).toFixed(1)}%</span>
+            </div>
+            <div className="h-2 bg-houston-muted w-full overflow-hidden">
+              <div
+                className="h-full bg-yellow-500 transition-all duration-1000"
+                style={{ width: `${telemetry.boostersFuel ?? 0}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <div>
           <div className="flex justify-between text-xs mb-1">
             <span>OXYGEN</span>

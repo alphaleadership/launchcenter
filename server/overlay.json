@@ -1,0 +1,33 @@
+{
+  "showMission": true,
+  "showCountdown": true,
+  "showStatus": true,
+  "showFlightData": true,
+  "showChecklist": true,
+  "overlayScale": 100,
+  "countdownTransform": {
+    "x": 8,
+    "y": 8,
+    "scale": 100
+  },
+  "missionTransform": {
+    "x": 43,
+    "y": 3,
+    "scale": 100
+  },
+  "flightDataTransform": {
+    "x": 93,
+    "y": 93,
+    "scale": 100
+  },
+  "checklistTransform": {
+    "x": 88,
+    "y": 17,
+    "scale": 100
+  },
+  "statusTransform": {
+    "x": 93,
+    "y": 36,
+    "scale": 100
+  }
+}

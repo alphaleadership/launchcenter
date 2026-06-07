@@ -5,6 +5,8 @@ export interface Telemetry {
   distance: number
   velocity: number
   fuel: number
+  boostersFuel?: number
+  hasBoosters?: boolean
   o2: number
   heartRate: number
   met: number
@@ -20,6 +22,26 @@ export interface Telemetry {
 
 export interface Status {
   [key: string]: string
+}
+
+export interface ItemTransform {
+  x: number
+  y: number
+  scale: number
+}
+
+export interface OverlayConfig {
+  showMission: boolean
+  showCountdown: boolean
+  showStatus: boolean
+  showFlightData: boolean
+  showChecklist: boolean
+  overlayScale?: number
+  missionTransform?: ItemTransform
+  countdownTransform?: ItemTransform
+  statusTransform?: ItemTransform
+  flightDataTransform?: ItemTransform
+  checklistTransform?: ItemTransform
 }
 
 export interface HistoryPoint {
@@ -41,12 +63,16 @@ interface TelemetryContextType {
   availableMissions: string[]
   history: HistoryPoint[]
   logs: LogEntry[]
+  irlLaunches: any[]
+  overlayConfig: OverlayConfig
   setSystemStatus: (system: string, newStatus: string) => void
+  updateOverlayConfig: (config: Partial<OverlayConfig>) => void
   selectLauncher: (launcher: string) => void
   selectMission: (mission: string) => void
   startCountdown: () => void
   holdCountdown: () => void
-  syncWithIRL: () => void
+  launcherDetails: Record<string, any>
+  syncWithIRL: (launchId?: string) => void
   formatMET: (seconds: number) => string
   formatCountdown: (seconds: number) => string
 }
@@ -78,95 +104,146 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   })
   const [availableLaunchers, setAvailableLaunchers] = useState<string[]>([])
   const [availableMissions, setAvailableMissions] = useState<string[]>([])
+  const [irlLaunches, setIrlLaunches] = useState<any[]>([])
   const [history, setHistory] = useState<HistoryPoint[]>([])
   const [logs, setLogs] = useState<LogEntry[]>([])
+  const [launcherDetails, setLauncherDetails] = useState<Record<string, any>>({})
+  const [overlayConfig, setOverlayConfig] = useState<OverlayConfig>({
+    showMission: true,
+    showCountdown: true,
+    showStatus: true,
+    showFlightData: true,
+    showChecklist: true,
+    overlayScale: 100
+  })
   const ws = useRef<WebSocket | null>(null)
   const prevTelemetry = useRef<Telemetry | null>(null)
   const connectedRef = useRef(false)
 
+  const updateOverlayConfig = (config: Partial<OverlayConfig>) => {
+    ws.current?.send(
+      JSON.stringify({
+        type: 'UPDATE_OVERLAY',
+        payload: config
+      })
+    )
+  }
+
   useEffect(() => {
-    ws.current = new WebSocket('ws://localhost:3001/ws')
+    let reconnectTimeout: any;
 
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      if (data.type === 'TELEMETRY') {
-        const newTel = data.payload as Telemetry
-        setTelemetry(newTel)
-        setHistory((prev) => [
+    const connect = () => {
+      ws.current = new WebSocket('ws://localhost:3001/ws')
+
+      ws.current.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        if (data.type === 'TELEMETRY') {
+          const newTel = data.payload as Telemetry
+          setTelemetry(newTel)
+          setHistory((prev) => [
+            ...prev,
+            { time: newTel.met, altitude: newTel.altitude, distance: newTel.distance }
+          ])
+
+          const timeStr = newTel.hasLaunched
+            ? formatMET(newTel.met)
+            : formatCountdown(newTel.countdown)
+
+          if (prevTelemetry.current && !newTel.hasLaunched && prevTelemetry.current.hasLaunched) {
+            setLogs([])
+          }
+
+          const newLogs: LogEntry[] = []
+
+          if (!connectedRef.current) {
+            newLogs.push({
+              time: '0:00:00:00',
+              message: 'SYS: CONNECTED TO HOUSTON_CC',
+              color: 'text-houston-muted'
+            })
+            connectedRef.current = true
+          }
+
+          if (newTel.isCounting && (!prevTelemetry.current || !prevTelemetry.current.isCounting)) {
+            newLogs.push({
+              time: timeStr,
+              message: 'SYS: COUNTDOWN INITIATED',
+              color: 'text-houston-green'
+            })
+          }
+
+          if (!newTel.isCounting && !newTel.hasLaunched && prevTelemetry.current?.isCounting) {
+            newLogs.push({
+              time: timeStr,
+              message: 'WRN: COUNTDOWN HOLD - CHECK SYSTEMS',
+              color: 'text-red-500'
+            })
+          }
+
+          if (newTel.hasLaunched && (!prevTelemetry.current || !prevTelemetry.current.hasLaunched)) {
+            newLogs.push({
+              time: '0:00:00:00',
+              message: 'EVT: LIFT OFF CONFIRMED',
+              color: 'text-white font-bold'
+            })
+          }
+
+          if (prevTelemetry.current && newTel.stage > prevTelemetry.current.stage) {
+            newLogs.push({
+              time: timeStr,
+              message: 'EVT: STAGE SEPARATION CONFIRMED',
+              color: 'text-yellow-500'
+            })
+          }
+
+          if (newTel.fuel < 10 && (!prevTelemetry.current || prevTelemetry.current.fuel >= 10)) {
+            newLogs.push({ time: timeStr, message: 'WRN: FUEL LOW', color: 'text-red-500' })
+          }
+
+          if (newLogs.length > 0) {
+            setLogs((prev) => [...prev, ...newLogs])
+          }
+
+          prevTelemetry.current = newTel
+        } else if (data.type === 'STATUS_UPDATE') {
+          setStatus(data.payload)
+        } else if (data.type === 'LAUNCHERS_LIST') {
+          setAvailableLaunchers(data.payload.launchers)
+          setLauncherDetails(data.payload.details)
+        } else if (data.type === 'MISSIONS_LIST') {
+          setAvailableMissions(data.payload.missions)
+        } else if (data.type === 'IRL_LAUNCHES_LIST') {
+          setIrlLaunches(data.payload)
+        } else if (data.type === 'OVERLAY_CONFIG') {
+          setOverlayConfig(data.payload)
+        }
+      }
+
+      ws.current.onclose = () => {
+        connectedRef.current = false
+        setLogs((prev) => [
           ...prev,
-          { time: newTel.met, altitude: newTel.altitude, distance: newTel.distance }
+          { time: '0:00:00:00', message: 'SYS: CONNECTION LOST, RECONNECTING...', color: 'text-red-500' }
         ])
+        reconnectTimeout = setTimeout(() => {
+          connect()
+        }, 2000)
+      }
 
-        const timeStr = newTel.hasLaunched
-          ? formatMET(newTel.met)
-          : formatCountdown(newTel.countdown)
-
-        if (prevTelemetry.current && !newTel.hasLaunched && prevTelemetry.current.hasLaunched) {
-          setLogs([])
-        }
-
-        const newLogs: LogEntry[] = []
-
-        if (!connectedRef.current) {
-          newLogs.push({
-            time: '0:00:00:00',
-            message: 'SYS: CONNECTED TO HOUSTON_CC',
-            color: 'text-houston-muted'
-          })
-          connectedRef.current = true
-        }
-
-        if (newTel.isCounting && (!prevTelemetry.current || !prevTelemetry.current.isCounting)) {
-          newLogs.push({
-            time: timeStr,
-            message: 'SYS: COUNTDOWN INITIATED',
-            color: 'text-houston-green'
-          })
-        }
-
-        if (!newTel.isCounting && !newTel.hasLaunched && prevTelemetry.current?.isCounting) {
-          newLogs.push({
-            time: timeStr,
-            message: 'WRN: COUNTDOWN HOLD - CHECK SYSTEMS',
-            color: 'text-red-500'
-          })
-        }
-
-        if (newTel.hasLaunched && (!prevTelemetry.current || !prevTelemetry.current.hasLaunched)) {
-          newLogs.push({
-            time: '0:00:00:00',
-            message: 'EVT: LIFT OFF CONFIRMED',
-            color: 'text-white font-bold'
-          })
-        }
-
-        if (prevTelemetry.current && newTel.stage > prevTelemetry.current.stage) {
-          newLogs.push({
-            time: timeStr,
-            message: 'EVT: STAGE SEPARATION CONFIRMED',
-            color: 'text-yellow-500'
-          })
-        }
-
-        if (newTel.fuel < 10 && (!prevTelemetry.current || prevTelemetry.current.fuel >= 10)) {
-          newLogs.push({ time: timeStr, message: 'WRN: FUEL LOW', color: 'text-red-500' })
-        }
-
-        if (newLogs.length > 0) {
-          setLogs((prev) => [...prev, ...newLogs])
-        }
-
-        prevTelemetry.current = newTel
-      } else if (data.type === 'STATUS_UPDATE') {
-        setStatus(data.payload)
-      } else if (data.type === 'LAUNCHERS_LIST') {
-        setAvailableLaunchers(data.payload.launchers)
-      } else if (data.type === 'MISSIONS_LIST') {
-        setAvailableMissions(data.payload.missions)
+      ws.current.onerror = () => {
+        ws.current?.close()
       }
     }
 
-    return () => ws.current?.close()
+    connect()
+
+    return () => {
+      clearTimeout(reconnectTimeout)
+      if (ws.current) {
+        ws.current.onclose = null // Prevents reconnect loop on unmount
+      }
+      ws.current?.close()
+    }
   }, [])
 
   const setSystemStatus = (system: string, newStatus: string) => {
@@ -214,10 +291,11 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     )
   }
 
-  const syncWithIRL = () => {
+  const syncWithIRL = (launchId?: string) => {
     ws.current?.send(
       JSON.stringify({
-        type: 'SYNC_IRL'
+        type: 'SYNC_IRL',
+        payload: launchId
       })
     )
   }
@@ -258,11 +336,15 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         availableMissions,
         history,
         logs,
+        irlLaunches,
+        overlayConfig,
         setSystemStatus,
+        updateOverlayConfig,
         selectLauncher,
         selectMission,
         startCountdown,
         holdCountdown,
+        launcherDetails,
         syncWithIRL,
         formatMET,
         formatCountdown

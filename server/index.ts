@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/bun'
-import { readFileSync, watch } from 'fs'
+import { readFileSync, writeFileSync, existsSync, watch } from 'fs'
 import { join } from 'path'
 
 const app = new Hono()
@@ -14,6 +14,7 @@ app.use('/*', serveStatic({ root: '../client/dist' }))
 app.get('*', serveStatic({ path: '../client/dist/index.html' }))
 const CONFIG_PATH = join(import.meta.dir, 'launchers.json')
 const MISSIONS_PATH = join(import.meta.dir, 'missions.json')
+const OVERLAY_CONFIG_PATH = join(import.meta.dir, 'overlay.json')
 let LAUNCHERS: any = {}
 let MISSIONS: any = {}
 
@@ -65,6 +66,52 @@ let currentMission: string = 'LEO'
 let status: Record<string, string> = {}
 let manualLaunchTrigger = false
 let flightFinishedMet = -1
+let targetLaunchDateMs: number | null = null
+let irlLaunches: any[] = []
+let overlayConfig: any = {
+  showMission: true,
+  showCountdown: true,
+  showStatus: true,
+  showFlightData: true,
+  showChecklist: true,
+  overlayScale: 100
+}
+
+try {
+  if (existsSync(OVERLAY_CONFIG_PATH)) {
+    overlayConfig = { ...overlayConfig, ...JSON.parse(readFileSync(OVERLAY_CONFIG_PATH, 'utf-8')) }
+  }
+} catch (err) {
+  console.error('❌ Failed to load overlay.json:', err)
+}
+
+async function fetchIRLLaunches() {
+  try {
+    console.log('🌍 Fetching IRL Launches data from TheSpaceDevs API...')
+    const res = await fetch('https://lldev.thespacedevs.com/2.2.0/launch/upcoming/?limit=15&mode=detailed')
+    const data = await res.json()
+    if (data.results && data.results.length > 0) {
+      const nowUnix = Math.floor(Date.now() / 1000)
+      // Keep only strictly future launches
+      irlLaunches = data.results.filter((l: any) => Math.floor(new Date(l.net).getTime() / 1000) > nowUnix)
+      console.log(`✅ Loaded ${irlLaunches.length} upcoming IRL launches`)
+      if (server) {
+        server.publish(
+          'houston-control',
+          JSON.stringify({
+            type: 'IRL_LAUNCHES_LIST',
+            payload: irlLaunches
+          })
+        )
+      }
+    }
+  } catch (err) {
+    console.error('❌ Failed to fetch IRL launches:', err)
+  }
+}
+
+fetchIRLLaunches()
+setInterval(fetchIRLLaunches, 5 * 60 * 1000) // Refresh every 5 minutes
 
 let telemetry = {
   altitude: 0,
@@ -73,6 +120,8 @@ let telemetry = {
   vx: 0,
   vy: 0,
   fuel: 100,
+  boostersFuel: 0,
+  hasBoosters: false,
   o2: 100,
   heartRate: 75,
   met: 0,
@@ -111,6 +160,8 @@ function resetMission() {
     vx: 0,
     vy: 0,
     fuel: 100,
+    boostersFuel: LAUNCHERS[currentLauncher]?.boosters ? 100 : 0,
+    hasBoosters: !!LAUNCHERS[currentLauncher]?.boosters,
     o2: 100,
     heartRate: 75,
     met: 0,
@@ -126,6 +177,7 @@ function resetMission() {
 
   manualLaunchTrigger = false
   flightFinishedMet = -1
+  targetLaunchDateMs = null
 
   // Dynamic status generation
   status = {
@@ -133,6 +185,9 @@ function resetMission() {
     GROUND: 'WAITING',
     RANGE: 'WAITING',
     WEATHER: 'WAITING'
+  }
+  if (LAUNCHERS[currentLauncher]?.boosters) {
+    status['BOOSTERS'] = 'WAITING'
   }
   for (let i = 1; i <= maxStages; i++) {
     status[`STAGE ${i}`] = 'WAITING'
@@ -154,27 +209,45 @@ setInterval(() => {
   if (!isLaunchReady && !telemetry.hasLaunched && telemetry.isCounting) {
     if (telemetry.countdown >= -recycleSeconds) {
       telemetry.isCounting = false
+      targetLaunchDateMs = null
     }
   }
 
   if (telemetry.isCounting && !telemetry.hasLaunched) {
     telemetry.countdown += 1
+    
+    // Affichage humain du countdown
+    if (telemetry.countdown <= 0 && (telemetry.countdown % 10 === 0 || telemetry.countdown >= -10)) {
+      if (!targetLaunchDateMs) targetLaunchDateMs = Date.now() - telemetry.countdown * 1000
+      const launchDate = new Date(targetLaunchDateMs)
+      console.log(`⏱️ ${formatCountdownForLog(telemetry.countdown)} (Lancement prévu le : ${launchDate.toLocaleString('fr-FR')})`)
+    }
+
     if (telemetry.countdown >= 0) {
       telemetry.hasLaunched = true
       telemetry.countdown = 0
       telemetry.met = 0
+      console.log(`\n🚀 LIFTOFF ! Décollage de ${currentLauncher} pour la mission ${currentMission}`)
     }
   }
 
   if (telemetry.hasLaunched) {
     telemetry.met += 1
-    const config = LAUNCHERS[currentLauncher]
-    // Safe access to stages array in case config is invalid
-    const stages = config?.stages || [{ accel: 50, burn: 5 }]
+    
+    if (telemetry.met === 60) {
+      console.log(`🌊 T+${formatMETForLog(telemetry.met)} - MAX-Q : Pression dynamique maximale atteinte !`)
+    }
+    const config = LAUNCHERS[currentLauncher] || {
+      payloadMass: 10,
+      stages: [{ deltaV: 3000, burnTime: 150, fuelMass: 100, dryMass: 10 }]
+    }
+    const stages = config.stages
     const currentStageConfig = stages[Math.min(telemetry.stage - 1, stages.length - 1)]
 
     // Staging Logic
     if (telemetry.fuel <= 0 && telemetry.stage < stages.length) {
+      console.log(`🔥 T+${formatMETForLog(telemetry.met)} - MECO : Coupure du moteur de l'étage ${telemetry.stage} !`)
+      console.log(`🔄 T+${formatMETForLog(telemetry.met)} - STAGE SEP : Séparation de l'étage ${telemetry.stage} confirmée !`)
       telemetry.stage += 1
       telemetry.fuel = 100
       telemetry.velocity += 150 // Separation kick
@@ -186,14 +259,56 @@ setInterval(() => {
     const gravity = 9.81
 
     if (telemetry.fuel > 0) {
-      const engineAccel = (Math.random() * currentStageConfig.accel + 20) * 0.1 // scale down for tick
+      // Tsiolkovsky equation setup
+      let M_init = config.payloadMass || 0
+      for (let i = telemetry.stage - 1; i < stages.length; i++) {
+        M_init += stages[i].dryMass + stages[i].fuelMass
+      }
+      
+      let M_final = M_init - currentStageConfig.fuelMass
+      // Effective exhaust velocity (Ve) derived from Delta-V
+      const Ve_stage = currentStageConfig.deltaV / Math.log(M_init / M_final)
+      const thrust_stage = (currentStageConfig.fuelMass / currentStageConfig.burnTime) * Ve_stage
+
+      let totalThrust = thrust_stage
+      
+      // Calculate current mass dynamically
+      let currentMass = config.payloadMass || 0
+      for (let i = telemetry.stage; i < stages.length; i++) {
+        currentMass += stages[i].dryMass + stages[i].fuelMass
+      }
+      currentMass += currentStageConfig.dryMass + (currentStageConfig.fuelMass * (telemetry.fuel / 100))
+      
+      if (telemetry.stage === 1 && telemetry.hasBoosters && config.boosters) {
+        currentMass += config.boosters.dryMass + (config.boosters.fuelMass * (telemetry.boostersFuel / 100))
+      }
+      
+      if (telemetry.stage === 1 && telemetry.hasBoosters && telemetry.boostersFuel > 0 && config.boosters) {
+        let M_init_b = M_init + config.boosters.dryMass + config.boosters.fuelMass
+        let M_final_b = M_init_b - config.boosters.fuelMass
+        const Ve_booster = config.boosters.deltaV / Math.log(M_init_b / M_final_b)
+        const thrust_booster = (config.boosters.fuelMass / config.boosters.burnTime) * Ve_booster
+        
+        totalThrust += thrust_booster
+        telemetry.boostersFuel = Math.max(0, telemetry.boostersFuel - (100 / config.boosters.burnTime))
+        
+        if (telemetry.boostersFuel <= 0) {
+          console.log(`💥 T+${formatMETForLog(telemetry.met)} - BECO : Extinction et séparation des boosters latéraux !`)
+        }
+      }
+
+      // Acceleration = Thrust / Mass
+      let engineAccel = totalThrust / currentMass
+
+      // Add a little randomness
+      engineAccel = (Math.random() * 0.1 + 0.95) * engineAccel
 
       // Vector physics
       telemetry.vx += engineAccel * Math.cos(pitch)
       telemetry.vy += engineAccel * Math.sin(pitch) - gravity * 0.1
 
       // Fuel consumption
-      telemetry.fuel = Math.max(0, telemetry.fuel - currentStageConfig.burn)
+      telemetry.fuel = Math.max(0, telemetry.fuel - (100 / currentStageConfig.burnTime))
     } else {
       // Drifting, only gravity acts
       telemetry.vy -= gravity * 0.1
@@ -209,8 +324,10 @@ setInterval(() => {
     if (telemetry.fuel <= 0 && telemetry.stage >= stages.length) {
       if (flightFinishedMet === -1) {
         flightFinishedMet = telemetry.met
+        console.log(`🔥 T+${formatMETForLog(telemetry.met)} - SECO : Coupure du moteur du dernier étage !`)
+        console.log(`✨ T+${formatMETForLog(telemetry.met)} - ORBIT : Insertion en orbite réussie !`)
         console.log(
-          `🏁 Flight finished! Orbit reached at MET ${formatMETForLog(telemetry.met)}. Resetting in 10s...`
+          `🏁 Flight finished! Orbit reached at MET ${formatMETForLog(telemetry.met)}. Resetting in 10s...\n`
         )
       } else if (telemetry.met >= flightFinishedMet + 10) {
         console.log(`🔄 Automatically resetting mission...`)
@@ -247,6 +364,29 @@ function formatMETForLog(seconds: number) {
   const m = Math.floor((seconds % 3600) / 60)
   const s = seconds % 60
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function formatCountdownForLog(seconds: number) {
+  const absSeconds = Math.abs(seconds)
+  const d = Math.floor(absSeconds / 86400)
+  const h = Math.floor((absSeconds % 86400) / 3600)
+  const m = Math.floor((absSeconds % 3600) / 60)
+  const s = absSeconds % 60
+  
+  const sign = seconds <= 0 ? 'T-' : 'T+'
+  
+  let result = ''
+  if (d > 0) {
+    result = `${d}d ${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`
+  } else if (h > 0) {
+    result = `${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`
+  } else if (m > 0) {
+    result = `${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`
+  } else {
+    result = `${s}s`
+  }
+
+  return `${sign}${result}`
 }
 
 // WebSocket with Bun
@@ -288,8 +428,20 @@ server = Bun.serve({
       )
       ws.send(
         JSON.stringify({
+          type: 'IRL_LAUNCHES_LIST',
+          payload: irlLaunches
+        })
+      )
+      ws.send(
+        JSON.stringify({
           type: 'TELEMETRY',
           payload: telemetry
+        })
+      )
+      ws.send(
+        JSON.stringify({
+          type: 'OVERLAY_CONFIG',
+          payload: overlayConfig
         })
       )
     },
@@ -299,13 +451,12 @@ server = Bun.serve({
         const { system, status: newStatus } = data.payload
         // @ts-ignore
         status[system] = newStatus
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'STATUS_UPDATE',
-            payload: status
-          })
-        )
+        const payloadStr = JSON.stringify({
+          type: 'STATUS_UPDATE',
+          payload: status
+        })
+        ws.send(payloadStr)
+        server.publish('houston-control', payloadStr)
       } else if (data.type === 'START_COUNTDOWN') {
         const isLaunchReady = Object.values(status).every((s) => s === 'GO')
         if (isLaunchReady) {
@@ -315,83 +466,92 @@ server = Bun.serve({
           // If countdown is closer to 0 than -recycleSeconds, recycle it back to -recycleSeconds
           if (telemetry.countdown > -recycleSeconds && telemetry.countdown < 0) {
             telemetry.countdown = -recycleSeconds
-            console.log(`⏱️ Countdown recycled to T-${recycleSeconds}s`)
+            console.log(`⏱️ Countdown recycled to ${formatCountdownForLog(-recycleSeconds)}`)
           }
 
           telemetry.isCounting = true
+          targetLaunchDateMs = Date.now() - telemetry.countdown * 1000
           console.log('🏁 Countdown manual trigger received')
+          const launchDate = new Date(targetLaunchDateMs)
+          console.log(`📅 Lancement prévu le : ${launchDate.toLocaleString('fr-FR')}`)
         }
       } else if (data.type === 'HOLD_COUNTDOWN') {
         telemetry.isCounting = false
+        targetLaunchDateMs = null
         console.log('⏸ Countdown hold manual trigger received')
       } else if (data.type === 'SELECT_LAUNCHER') {
         currentLauncher = data.payload as keyof typeof LAUNCHERS
         resetMission()
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'STATUS_UPDATE',
-            payload: status
-          })
-        )
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'TELEMETRY',
-            payload: telemetry
-          })
-        )
+        const statusPayloadStr = JSON.stringify({
+          type: 'STATUS_UPDATE',
+          payload: status
+        })
+        ws.send(statusPayloadStr)
+        server.publish('houston-control', statusPayloadStr)
+
+        const telemetryPayloadStr = JSON.stringify({
+          type: 'TELEMETRY',
+          payload: telemetry
+        })
+        ws.send(telemetryPayloadStr)
+        server.publish('houston-control', telemetryPayloadStr)
+      } else if (data.type === 'UPDATE_OVERLAY') {
+        overlayConfig = { ...overlayConfig, ...data.payload }
+        try {
+          writeFileSync(OVERLAY_CONFIG_PATH, JSON.stringify(overlayConfig, null, 2))
+        } catch (err) {
+          console.error('❌ Failed to save overlay.json:', err)
+        }
+        const configPayloadStr = JSON.stringify({
+          type: 'OVERLAY_CONFIG',
+          payload: overlayConfig
+        })
+        ws.send(configPayloadStr)
+        server.publish('houston-control', configPayloadStr)
       } else if (data.type === 'SELECT_MISSION') {
         currentMission = data.payload as string
         resetMission()
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'STATUS_UPDATE',
-            payload: status
-          })
-        )
-        server.publish(
-          'houston-control',
-          JSON.stringify({
-            type: 'TELEMETRY',
-            payload: telemetry
-          })
-        )
+        const statusPayloadStr = JSON.stringify({
+          type: 'STATUS_UPDATE',
+          payload: status
+        })
+        ws.send(statusPayloadStr)
+        server.publish('houston-control', statusPayloadStr)
+
+        const telemetryPayloadStr = JSON.stringify({
+          type: 'TELEMETRY',
+          payload: telemetry
+        })
+        ws.send(telemetryPayloadStr)
+        server.publish('houston-control', telemetryPayloadStr)
       } else if (data.type === 'SYNC_IRL') {
-        console.log('🌍 Fetching IRL Launch data from TheSpaceDevs API...')
-        fetch('https://lldev.thespacedevs.com/2.2.0/launch/upcoming/?limit=5&mode=detailed')
-          .then((res) => res.json())
-          .then((data: any) => {
-            if (!data.results || data.results.length === 0) return
+        const launchId = data.payload
+        let launch = irlLaunches[0]
+        if (launchId) {
+          launch = irlLaunches.find((l: any) => l.id === launchId) || launch
+        }
 
-            const nowUnix = Math.floor(Date.now() / 1000)
-            let launch = data.results[0]
-            let launchDateUnix = Math.floor(new Date(launch.net).getTime() / 1000)
+        if (!launch) {
+          console.error('❌ No IRL launch available to sync')
+          return
+        }
 
-            // Find the first launch that is actually in the future
-            for (const l of data.results) {
-              const lDateUnix = Math.floor(new Date(l.net).getTime() / 1000)
-              if (lDateUnix > nowUnix) {
-                launch = l
-                launchDateUnix = lDateUnix
-                break
-              }
-            }
-            const diffSeconds = nowUnix - launchDateUnix
+        const nowUnix = Math.floor(Date.now() / 1000)
+        let launchDateUnix = Math.floor(new Date(launch.net).getTime() / 1000)
+        const diffSeconds = nowUnix - launchDateUnix
 
-            if (launch.rocket && launch.rocket.configuration && launch.rocket.configuration.name) {
-              // Try to match the exact name, or just use it even if not in DB (will fallback to 2 stages)
-              currentLauncher = launch.rocket.configuration.name
-            }
+        if (launch.rocket && launch.rocket.configuration && launch.rocket.configuration.name) {
+          // Try to match the exact name, or just use it even if not in DB (will fallback to 2 stages)
+          currentLauncher = launch.rocket.configuration.name
+        }
 
-            resetMission()
-            currentMission = `IRL: ${launch.name}`
-            telemetry.mission = currentMission
-            telemetry.countdown = diffSeconds
-            telemetry.isCounting = true
-            telemetry.hasLaunched = diffSeconds >= 0
-            telemetry.met = diffSeconds >= 0 ? diffSeconds : 0
+        resetMission()
+        currentMission = `IRL: ${launch.name}`
+        telemetry.mission = currentMission
+        telemetry.countdown = diffSeconds
+        telemetry.isCounting = true
+        telemetry.hasLaunched = diffSeconds >= 0
+        telemetry.met = diffSeconds >= 0 ? diffSeconds : 0
 
             let liveUrl = ''
             if (launch.vidURLs && launch.vidURLs.length > 0) {
@@ -429,24 +589,23 @@ server = Bun.serve({
               status[key] = 'GO'
             }
 
-            console.log(`✅ Synced with IRL Launch: ${launch.name} (Countdown: ${diffSeconds}s)`)
+            targetLaunchDateMs = Date.now() - diffSeconds * 1000
+            const launchDate = new Date(targetLaunchDateMs)
+            console.log(`✅ Synced with IRL Launch: ${launch.name} (Countdown: ${formatCountdownForLog(diffSeconds)} - Prévu le: ${launchDate.toLocaleString('fr-FR')})`)
 
-            server.publish(
-              'houston-control',
-              JSON.stringify({
-                type: 'STATUS_UPDATE',
-                payload: status
-              })
-            )
-            server.publish(
-              'houston-control',
-              JSON.stringify({
-                type: 'TELEMETRY',
-                payload: telemetry
-              })
-            )
-          })
-          .catch((err) => console.error('❌ Failed to fetch IRL launch:', err))
+            const statusPayloadStr = JSON.stringify({
+              type: 'STATUS_UPDATE',
+              payload: status
+            })
+            ws.send(statusPayloadStr)
+            server.publish('houston-control', statusPayloadStr)
+
+            const telemetryPayloadStr = JSON.stringify({
+              type: 'TELEMETRY',
+              payload: telemetry
+            })
+            ws.send(telemetryPayloadStr)
+            server.publish('houston-control', telemetryPayloadStr)
       }
     }
   }
