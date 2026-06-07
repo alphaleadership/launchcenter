@@ -39,28 +39,28 @@ export const PreFlightTimeline: React.FC = () => {
       </h2>
       <div className="relative h-12 flex items-center">
         <div className="absolute w-full h-px bg-houston-muted top-1/2 -translate-y-1/2" />
-        
+
         {!telemetry.hasLaunched ? (
           <>
             <div className="flex justify-between w-full relative z-10">
-          {[-30, -20, -10, 0].map((t) => (
-            <div key={t} className="flex flex-col items-center">
-              <div
-                className={cn(
-                  'w-2 h-2 rounded-full border border-houston-muted bg-houston-dark',
-                  telemetry.countdown >= t && 'bg-houston-green border-houston-green'
-                )}
-              />
-              <span className="text-[8px] mt-1">{t}s</span>
+              {[-30, -20, -10, 0].map((t) => (
+                <div key={t} className="flex flex-col items-center">
+                  <div
+                    className={cn(
+                      'w-2 h-2 rounded-full border border-houston-muted bg-houston-dark',
+                      telemetry.countdown >= t && 'bg-houston-green border-houston-green'
+                    )}
+                  />
+                  <span className="text-[8px] mt-1">{t}s</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div
-          className="absolute h-1 bg-houston-green transition-all duration-1000 ease-linear top-1/2 -translate-y-1/2"
-          style={{
-            width: `${Math.min(100, Math.max(0, ((telemetry.countdown + 30) / 30) * 100))}%`
-          }}
-        />
+            <div
+              className="absolute h-1 bg-houston-green transition-all duration-1000 ease-linear top-1/2 -translate-y-1/2"
+              style={{
+                width: `${Math.min(100, Math.max(0, ((telemetry.countdown + 30) / 30) * 100))}%`
+              }}
+            />
             {telemetry.isCounting && !telemetry.hasLaunched && (
               <div
                 className="absolute -top-6 text-[10px] text-yellow-500 animate-pulse"
@@ -75,20 +75,29 @@ export const PreFlightTimeline: React.FC = () => {
             <div className="flex justify-between w-full relative z-10">
               {flightEvents.map((evt, idx) => {
                 const passed = telemetry.met >= evt.time
-                const isCurrent = telemetry.met >= evt.time && (idx === flightEvents.length - 1 || telemetry.met < flightEvents[idx + 1].time)
+                const isCurrent =
+                  telemetry.met >= evt.time &&
+                  (idx === flightEvents.length - 1 || telemetry.met < flightEvents[idx + 1].time)
                 return (
-                  <div key={evt.name} className="flex flex-col items-center absolute -translate-x-1/2" style={{ left: `${(evt.time / maxFlightTime) * 100}%` }}>
+                  <div
+                    key={evt.name}
+                    className="flex flex-col items-center absolute -translate-x-1/2"
+                    style={{ left: `${(evt.time / maxFlightTime) * 100}%` }}
+                  >
                     <div
                       className={cn(
                         'w-2 h-2 rounded-full border border-houston-muted bg-houston-dark transition-colors',
                         passed && 'bg-houston-green border-houston-green',
-                        isCurrent && 'bg-yellow-500 border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.8)]'
+                        isCurrent &&
+                          'bg-yellow-500 border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.8)]'
                       )}
                     />
-                    <span className={cn(
-                      "text-[8px] mt-1 whitespace-nowrap transition-colors",
-                      isCurrent ? "text-yellow-500 font-bold" : "text-gray-500"
-                    )}>
+                    <span
+                      className={cn(
+                        'text-[8px] mt-1 whitespace-nowrap transition-colors',
+                        isCurrent ? 'text-yellow-500 font-bold' : 'text-gray-500'
+                      )}
+                    >
                       {evt.name}
                     </span>
                   </div>
@@ -103,7 +112,10 @@ export const PreFlightTimeline: React.FC = () => {
             />
             <div
               className="absolute -top-6 text-[10px] text-yellow-500"
-              style={{ left: `${Math.min(100, Math.max(0, (telemetry.met / maxFlightTime) * 100))}%`, transform: 'translateX(-50%)' }}
+              style={{
+                left: `${Math.min(100, Math.max(0, (telemetry.met / maxFlightTime) * 100))}%`,
+                transform: 'translateX(-50%)'
+              }}
             >
               ▼
             </div>

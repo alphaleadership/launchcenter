@@ -25,12 +25,12 @@ export const AltitudeProfile: React.FC = () => {
 
     while (stage <= stages.length && met < 3600) {
       const stg = stages[stage - 1]
-      
+
       let M_init = config.payloadMass || 0
       for (let i = stage - 1; i < stages.length; i++) {
         M_init += stages[i].dryMass + stages[i].fuelMass
       }
-      
+
       let M_final = M_init - stg.fuelMass
       const Ve_stage = stg.deltaV / Math.log(M_init / M_final)
       const thrust_stage = (stg.fuelMass / stg.burnTime) * Ve_stage
@@ -40,10 +40,10 @@ export const AltitudeProfile: React.FC = () => {
       for (let i = stage; i < stages.length; i++) {
         currentMass += stages[i].dryMass + stages[i].fuelMass
       }
-      currentMass += stg.dryMass + (stg.fuelMass * (fuel / 100))
+      currentMass += stg.dryMass + stg.fuelMass * (fuel / 100)
 
       if (stage === 1 && config.boosters && boostersFuel > 0) {
-        currentMass += config.boosters.dryMass + (config.boosters.fuelMass * (boostersFuel / 100))
+        currentMass += config.boosters.dryMass + config.boosters.fuelMass * (boostersFuel / 100)
         let M_init_b = M_init + config.boosters.dryMass + config.boosters.fuelMass
         let M_final_b = M_init_b - config.boosters.fuelMass
         const Ve_booster = config.boosters.deltaV / Math.log(M_init_b / M_final_b)
@@ -54,10 +54,10 @@ export const AltitudeProfile: React.FC = () => {
 
       let engineAccel = totalThrust / currentMass
       const pitch = Math.max(0, (Math.PI / 2) * (1 - met / 600))
-      
+
       vx += engineAccel * Math.cos(pitch)
       vy += engineAccel * Math.sin(pitch) - 9.81 * 0.1
-      
+
       dist += vx
       alt = Math.max(0, alt + vy)
       fuel -= 100 / stg.burnTime
@@ -65,7 +65,7 @@ export const AltitudeProfile: React.FC = () => {
       if (fuel <= 0 && stage < stages.length) {
         stage++
         fuel = 100
-        const v_total = Math.sqrt(vx*vx + vy*vy) + 150
+        const v_total = Math.sqrt(vx * vx + vy * vy) + 150
         const angle = Math.atan2(vy, vx)
         vx = v_total * Math.cos(angle)
         vy = v_total * Math.sin(angle)
@@ -74,7 +74,7 @@ export const AltitudeProfile: React.FC = () => {
       if (met % 5 === 0) {
         result.push({ distance: dist, altitude: alt })
       }
-      
+
       met++
       if (fuel <= 0 && stage >= stages.length) {
         result.push({ distance: dist, altitude: alt })

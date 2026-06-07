@@ -1,42 +1,149 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTelemetry } from '../context/TelemetryContext'
 import { cn } from '../utils/cn'
 
 export const ObsControlPanel: React.FC = () => {
   const { overlayConfig, updateOverlayConfig } = useTelemetry()
+  const [activeControl, setActiveControl] = useState<keyof typeof overlayConfig | null>(null)
 
-  const Toggle = ({ label, checked, onChange }: { label: string; checked: boolean; onChange: (c: boolean) => void }) => (
-    <label className="flex items-center justify-between p-4 border-2 border-houston-muted rounded hover:border-houston-green focus-within:border-houston-green focus-within:ring-2 focus-within:ring-houston-green/40 cursor-pointer transition-all bg-black/50">
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input
+      if (document.activeElement?.tagName === 'INPUT') return
+
+      if (!activeControl) return
+
+      let dx = 0
+      let dy = 0
+      if (e.key === 'ArrowUp') dy = -1
+      if (e.key === 'ArrowDown') dy = 1
+      if (e.key === 'ArrowLeft') dx = -1
+      if (e.key === 'ArrowRight') dx = 1
+
+      if (dx !== 0 || dy !== 0) {
+        e.preventDefault()
+        const shiftMultiplier = e.shiftKey ? 5 : 1
+        const currentTransform = (overlayConfig[activeControl] as any) || {
+          x: 85,
+          y: 50,
+          scale: 100
+        }
+
+        updateOverlayConfig({
+          [activeControl]: {
+            ...currentTransform,
+            x: Math.max(0, Math.min(100, currentTransform.x + dx * shiftMultiplier)),
+            y: Math.max(0, Math.min(100, currentTransform.y + dy * shiftMultiplier))
+          }
+        })
+      }
+    }
+
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [activeControl, overlayConfig, updateOverlayConfig])
+
+  const Toggle = ({
+    label,
+    checked,
+    onChange,
+    onFocusBlock
+  }: {
+    label: string
+    checked: boolean
+    onChange: (c: boolean) => void
+    onFocusBlock?: () => void
+  }) => (
+    <label
+      className="flex items-center justify-between p-4 border-2 border-houston-muted rounded hover:border-houston-green focus-within:border-houston-green focus-within:ring-2 focus-within:ring-houston-green/40 cursor-pointer transition-all bg-black/50"
+      onClick={onFocusBlock}
+    >
       <span className="font-bold tracking-widest uppercase text-sm">{label}</span>
-      <div className={cn('w-12 h-6 rounded-full p-1 transition-colors', checked ? 'bg-houston-green' : 'bg-gray-800')}>
-        <div className={cn('w-4 h-4 rounded-full bg-black transition-transform', checked ? 'translate-x-6' : 'translate-x-0')} />
+      <div
+        className={cn(
+          'w-12 h-6 rounded-full p-1 transition-colors',
+          checked ? 'bg-houston-green' : 'bg-gray-800'
+        )}
+      >
+        <div
+          className={cn(
+            'w-4 h-4 rounded-full bg-black transition-transform',
+            checked ? 'translate-x-6' : 'translate-x-0'
+          )}
+        />
       </div>
-      <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} aria-label={label} />
+      <input
+        type="checkbox"
+        className="sr-only"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        aria-label={label}
+      />
     </label>
   )
 
   const TransformControls = ({ itemKey }: { itemKey: keyof typeof overlayConfig }) => {
-    // @ts-ignore
-    const transform: { x: number, y: number, scale: number } = overlayConfig[itemKey] || { x: 85, y: 50, scale: 100 }
-    
+    const transform: { x: number; y: number; scale: number } = (overlayConfig[itemKey] as any) || {
+      x: 85,
+      y: 50,
+      scale: 100
+    }
+
     const update = (changes: any) => {
       updateOverlayConfig({ [itemKey]: { ...transform, ...changes } })
     }
-    
+
+    const isActive = activeControl === itemKey
+
     return (
-      <div className="flex flex-col gap-2 p-3 bg-black/30 border-x-2 border-b-2 border-houston-muted rounded-b -mt-1">
+      <div
+        onClick={() => setActiveControl(itemKey)}
+        className={cn(
+          'flex flex-col gap-2 p-3 bg-black/30 border-x-2 border-b-2 rounded-b -mt-1 transition-colors cursor-pointer',
+          isActive
+            ? 'border-houston-green shadow-[0_0_15px_rgba(0,255,0,0.1)]'
+            : 'border-houston-muted'
+        )}
+      >
+        {isActive && (
+          <div className="text-[10px] text-houston-green uppercase tracking-widest text-center font-bold mb-1">
+            Sélectionné (Utilisez les flèches pour déplacer)
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-4">
           <label className="flex flex-col text-[10px] uppercase text-houston-muted">
             <span className="mb-1">Pos X ({transform.x}%)</span>
-            <input type="range" min="0" max="100" value={transform.x} onChange={e => update({x: parseInt(e.target.value)})} className="accent-houston-green" />
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={transform.x}
+              onChange={(e) => update({ x: parseInt(e.target.value) })}
+              className="accent-houston-green"
+            />
           </label>
           <label className="flex flex-col text-[10px] uppercase text-houston-muted">
             <span className="mb-1">Pos Y ({transform.y}%)</span>
-            <input type="range" min="0" max="100" value={transform.y} onChange={e => update({y: parseInt(e.target.value)})} className="accent-houston-green" />
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={transform.y}
+              onChange={(e) => update({ y: parseInt(e.target.value) })}
+              className="accent-houston-green"
+            />
           </label>
           <label className="flex flex-col text-[10px] uppercase text-houston-muted">
             <span className="mb-1">Scale ({transform.scale}%)</span>
-            <input type="range" min="10" max="300" value={transform.scale} onChange={e => update({scale: parseInt(e.target.value)})} className="accent-houston-green" />
+            <input
+              type="range"
+              min="10"
+              max="300"
+              value={transform.scale}
+              onChange={(e) => update({ scale: parseInt(e.target.value) })}
+              className="accent-houston-green"
+            />
           </label>
         </div>
       </div>
@@ -49,30 +156,55 @@ export const ObsControlPanel: React.FC = () => {
         <h1 className="text-3xl font-black uppercase mb-8 border-b-2 border-houston-green pb-4">
           ⚙️ OBS Overlay Control
         </h1>
-        
+
         <p className="text-houston-muted mb-8 text-sm uppercase">
-          Activer ou désactiver les éléments affichés en direct sur l'overlay OBS (source navigateur).
+          Activer, sélectionner, puis déplacer les éléments avec les flèches.
         </p>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col">
-            <Toggle label="Badge Mission & Lanceur" checked={overlayConfig.showMission} onChange={(c) => updateOverlayConfig({ showMission: c })} />
+            <Toggle
+              label="Badge Mission & Lanceur"
+              checked={overlayConfig.showMission}
+              onChange={(c) => updateOverlayConfig({ showMission: c })}
+              onFocusBlock={() => setActiveControl('missionTransform')}
+            />
             {overlayConfig.showMission && <TransformControls itemKey="missionTransform" />}
           </div>
           <div className="flex flex-col">
-            <Toggle label="Chronomètre / MET" checked={overlayConfig.showCountdown} onChange={(c) => updateOverlayConfig({ showCountdown: c })} />
+            <Toggle
+              label="Chronomètre / MET"
+              checked={overlayConfig.showCountdown}
+              onChange={(c) => updateOverlayConfig({ showCountdown: c })}
+              onFocusBlock={() => setActiveControl('countdownTransform')}
+            />
             {overlayConfig.showCountdown && <TransformControls itemKey="countdownTransform" />}
           </div>
           <div className="flex flex-col">
-            <Toggle label="Indicateur de Statut (In Flight / Hold)" checked={overlayConfig.showStatus} onChange={(c) => updateOverlayConfig({ showStatus: c })} />
+            <Toggle
+              label="Indicateur de Statut (In Flight / Hold)"
+              checked={overlayConfig.showStatus}
+              onChange={(c) => updateOverlayConfig({ showStatus: c })}
+              onFocusBlock={() => setActiveControl('statusTransform')}
+            />
             {overlayConfig.showStatus && <TransformControls itemKey="statusTransform" />}
           </div>
           <div className="flex flex-col">
-            <Toggle label="Données de vol (Altitude, Vitesse)" checked={overlayConfig.showFlightData} onChange={(c) => updateOverlayConfig({ showFlightData: c })} />
+            <Toggle
+              label="Données de vol (Altitude, Vitesse)"
+              checked={overlayConfig.showFlightData}
+              onChange={(c) => updateOverlayConfig({ showFlightData: c })}
+              onFocusBlock={() => setActiveControl('flightDataTransform')}
+            />
             {overlayConfig.showFlightData && <TransformControls itemKey="flightDataTransform" />}
           </div>
           <div className="flex flex-col">
-            <Toggle label="Checklist & Flight Timeline" checked={overlayConfig.showChecklist} onChange={(c) => updateOverlayConfig({ showChecklist: c })} />
+            <Toggle
+              label="Checklist & Flight Timeline"
+              checked={overlayConfig.showChecklist}
+              onChange={(c) => updateOverlayConfig({ showChecklist: c })}
+              onFocusBlock={() => setActiveControl('checklistTransform')}
+            />
             {overlayConfig.showChecklist && <TransformControls itemKey="checklistTransform" />}
           </div>
         </div>
@@ -80,8 +212,12 @@ export const ObsControlPanel: React.FC = () => {
         <div className="mt-8 p-6 border-2 border-houston-muted rounded bg-black/50">
           <label className="flex flex-col gap-4 cursor-pointer">
             <div className="flex justify-between items-center">
-              <span className="font-bold tracking-widest uppercase text-sm">Échelle de l'Overlay (Taille)</span>
-              <span className="font-mono text-houston-green">{overlayConfig.overlayScale || 100}%</span>
+              <span className="font-bold tracking-widest uppercase text-sm">
+                Échelle de l'Overlay (Taille)
+              </span>
+              <span className="font-mono text-houston-green">
+                {overlayConfig.overlayScale || 100}%
+              </span>
             </div>
             <input
               type="range"

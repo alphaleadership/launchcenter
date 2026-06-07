@@ -1,1 +1,5 @@
-const WebSocket = require('ws'); const ws = new WebSocket('ws://localhost:3001/ws'); ws.on('open', () => console.log('connected')); ws.on('message', (e) => console.log(e.toString())); setTimeout(() => process.exit(0), 1000);
+const WebSocket = require('ws')
+const ws = new WebSocket('ws://localhost:3001/ws')
+ws.on('open', () => console.log('connected'))
+ws.on('message', (e) => console.log(e.toString()))
+setTimeout(() => process.exit(0), 1000)

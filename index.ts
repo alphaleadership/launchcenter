@@ -3,7 +3,8 @@ import { spawn } from 'bun'
 console.log('🚀 Starting Launch Center...')
 
 const server = spawn({
-  cmd: ['bun', 'run', 'server/index.ts'],
+  cmd: ['bun', 'run', 'index.ts'],
+  cwd: './server',
   stdout: 'inherit',
   stderr: 'inherit'
 })

@@ -115,7 +115,9 @@ const AppContent: React.FC = () => {
                 }}
                 className="px-4 py-2 border-2 font-bold transition-all border-blue-500 bg-black text-blue-500 hover:bg-blue-500 hover:text-white cursor-pointer outline-none"
               >
-                <option value="" disabled>🌍 SYNC IRL LAUNCH...</option>
+                <option value="" disabled>
+                  🌍 SYNC IRL LAUNCH...
+                </option>
                 {irlLaunches.map((l: any) => (
                   <option key={l.id} value={l.id} className="text-black bg-white">
                     {l.name}

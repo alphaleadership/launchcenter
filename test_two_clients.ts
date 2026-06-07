@@ -1,1 +1,9 @@
-const ws1 = new WebSocket('ws://localhost:3001/ws'); const ws2 = new WebSocket('ws://localhost:3001/ws'); ws1.addEventListener('open', () => { setTimeout(() => { ws1.send(JSON.stringify({type: 'GO_NO_GO', payload: {system: 'GUIDANCE', status: 'GO'}})); }, 200); }); ws2.addEventListener('message', e => console.log('ws2 received:', e.data)); setTimeout(() => process.exit(0), 1000);
+const ws1 = new WebSocket('ws://localhost:3001/ws')
+const ws2 = new WebSocket('ws://localhost:3001/ws')
+ws1.addEventListener('open', () => {
+  setTimeout(() => {
+    ws1.send(JSON.stringify({ type: 'GO_NO_GO', payload: { system: 'GUIDANCE', status: 'GO' } }))
+  }, 200)
+})
+ws2.addEventListener('message', (e) => console.log('ws2 received:', e.data))
+setTimeout(() => process.exit(0), 1000)
