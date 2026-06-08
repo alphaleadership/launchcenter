@@ -4,7 +4,7 @@ import { serveStatic } from 'hono/bun'
 import { readFileSync, writeFileSync, existsSync, watch } from 'fs'
 import { join } from 'path'
 import OBSWebSocket from 'obs-websocket-js'
-import { getAuthUrl, handleOAuthCallback, isAuthenticated, createYouTubeLive, endYouTubeLive } from './youtube'
+import { getAuthUrl, handleOAuthCallback, isAuthenticated, createYouTubeLive, endYouTubeLive, waitAndGoLive } from './youtube'
 
 const app = new Hono()
 app.use('/status/*', cors())
@@ -14,8 +14,27 @@ app.use('/oauth2callback', cors())
 const CONFIG_PATH = join(import.meta.dir, 'launchers.json')
 const MISSIONS_PATH = join(import.meta.dir, 'missions.json')
 const OVERLAY_CONFIG_PATH = join(import.meta.dir, 'overlay.json')
+const IRL_TIMELINE_PATH = join(import.meta.dir, 'irlTimeline.json')
+const TIMELINE_PRESETS_PATH = join(import.meta.dir, 'timeline_presets.json')
+let timelinePresets: Record<string, any[]> = {}
+try {
+  if (existsSync(TIMELINE_PRESETS_PATH))
+    timelinePresets = JSON.parse(readFileSync(TIMELINE_PRESETS_PATH, 'utf-8'))
+} catch {}
 let LAUNCHERS: any = {}
 let MISSIONS: any = {}
+
+let irlTimeline: any[] = []
+
+// Load IRL timeline from file if it exists
+try {
+  if (existsSync(IRL_TIMELINE_PATH)) {
+    irlTimeline = JSON.parse(readFileSync(IRL_TIMELINE_PATH, 'utf-8'))
+    console.log(`📅 IRL Timeline loaded: ${irlTimeline.length} events`)
+  }
+} catch (err) {
+  console.error('❌ Failed to load irlTimeline.json:', err)
+}
 
 let server: any
 
@@ -123,7 +142,7 @@ async function fetchIRLLaunches() {
     const res = await fetch(
       'https://lldev.thespacedevs.com/2.2.0/launch/upcoming/?limit=15&mode=detailed'
     )
-    const data = await res.json()
+    const data = await res.json() as any
     if (data.results && data.results.length > 0) {
       const nowUnix = Math.floor(Date.now() / 1000)
       // Keep only strictly future launches
@@ -254,7 +273,51 @@ app.get('/oauth2callback', async (c) => {
 })
 
 app.get('/youtube/status', (c) => {
-  return c.json({ authenticated: isAuthenticated(), broadcastId: currentBroadcastId })
+  return c.json({
+    authenticated: isAuthenticated(),
+    broadcastId: currentBroadcastId,
+    obsConnected: isObsConnected,
+    obsStreaming: obsLiveStarted,
+  })
+})
+
+// Arrêt manuel du live YouTube + OBS
+app.post('/youtube/stop', async (c) => {
+  try {
+    if (isObsConnected && obsLiveStarted) {
+      await obs.call('StopStream').catch((e: any) => console.warn('OBS stop:', e.message))
+      obsLiveStarted = false
+    }
+    if (currentBroadcastId) {
+      await endYouTubeLive(currentBroadcastId)
+      currentBroadcastId = null
+    }
+    return c.json({ ok: true, message: 'Live arrêté' })
+  } catch (err: any) {
+    return c.json({ ok: false, error: err.message }, 500)
+  }
+})
+
+// Diagnostic OBS stream service
+app.get('/youtube/debug', async (c) => {
+  if (!isObsConnected) {
+    return c.json({ error: 'OBS non connecté' }, 503)
+  }
+  try {
+    const streamStatus = await obs.call('GetStreamStatus')
+    const serviceSettings = await obs.call('GetStreamServiceSettings')
+    return c.json({
+      obsConnected: isObsConnected,
+      obsStreaming: streamStatus.outputActive,
+      broadcastId: currentBroadcastId,
+      authenticated: isAuthenticated(),
+      serviceType: serviceSettings.streamServiceType,
+      serviceServer: (serviceSettings.streamServiceSettings as any)?.server,
+      serviceKey: ((serviceSettings.streamServiceSettings as any)?.key || '').substring(0, 8) + '...',
+    })
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500)
+  }
 })
 
 // Serve static files from the React app build (AFTER API routes)
@@ -281,6 +344,7 @@ setInterval(() => {
 
     // Démarrage auto du live OBS à T-30 minutes (ou au début du recycleTime si < 30min)
     if (telemetry.countdown >= -1800 && telemetry.countdown < 0 && isObsConnected && !obsLiveStarted) {
+      // Marquer comme en cours de démarrage pour éviter les déclenchements multiples
       obsLiveStarted = true
 
       let title = currentMission
@@ -292,74 +356,131 @@ setInterval(() => {
       }
 
       ;(async () => {
+        let youtubeStreamId: string | null = null
+
         // ── 1. Créer la diffusion YouTube si authentifié ──────────────────────
         if (isAuthenticated()) {
           try {
             const broadcast = await createYouTubeLive(title, isIRL)
             currentBroadcastId = broadcast.broadcastId
+            youtubeStreamId = broadcast.streamId
 
-            // Injecter uniquement la clé et les IDs dans OBS, conserver le serveur RTMPS existant
-            const currentSettings = await obs.call('GetStreamServiceSettings')
-            await obs.call('SetStreamServiceSettings', {
-              streamServiceType: currentSettings.streamServiceType,
-              streamServiceSettings: {
-                ...currentSettings.streamServiceSettings,
-                key: broadcast.streamKey,
-                stream_id: broadcast.streamId,
-                broadcast_id: broadcast.broadcastId,
-                // NE PAS remplacer "server" - garder rtmps://a.rtmps.youtube.com:443/live2
+            // Utiliser l'URL d'ingestion retournée par l'API YouTube (rtmp:// ou rtmps://)
+            const rtmpServer = broadcast.ingestionAddress
+            const streamKey = broadcast.streamKey
+
+            console.log(`🎬 Configuration OBS → Server: ${rtmpServer}`)
+            console.log(`🗝️  Configuration OBS → Key: ${streamKey.substring(0, 8)}...`)
+            console.log(`📡 Broadcast ID: ${broadcast.broadcastId}`)
+
+            // ── 1b. Arrêter le stream si déjà actif (pour forcer rechargement config) ──
+            try {
+              const streamStatus = await obs.call('GetStreamStatus')
+              if (streamStatus.outputActive) {
+                console.log(`⏹️ Stream OBS déjà actif, arrêt pour appliquer la nouvelle config...`)
+                await obs.call('StopStream')
+                // Attendre confirmation que le stream est bien arrêté (max 8s)
+                let stopped = false
+                for (let i = 0; i < 8; i++) {
+                  await new Promise((r) => setTimeout(r, 1000))
+                  const st = await obs.call('GetStreamStatus').catch(() => ({ outputActive: false }))
+                  if (!st.outputActive) { stopped = true; break }
+                }
+                if (!stopped) console.warn('⚠️ OBS stream pas encore arrêté après 8s, on continue quand même')
               }
+            } catch { /* pas de stream actif, c'est OK */ }
+
+            // rtmp_custom est le seul type supporté via WebSocket sur cet OBS.
+            // Le broadcast YouTube est géré côté API par waitAndGoLive().
+            await obs.call('SetStreamServiceSettings', {
+              streamServiceType: 'rtmp_custom',
+              streamServiceSettings: {
+                server: rtmpServer,
+                key: streamKey,
+                use_auth: false,
+              },
             })
-            console.log(`🎬 Stream key injectée dans OBS → ${broadcast.streamKey}`)
+            console.log(`✅ OBS configuré (rtmp_custom → ${rtmpServer})`)
+
+            // Délai pour que OBS applique la configuration
+            await new Promise((resolve) => setTimeout(resolve, 1500))
           } catch (err: any) {
-            console.error('❌ Erreur création diffusion YouTube:', err.message)
+            console.error(`❌ Erreur création diffusion YouTube : ${err.message}`)
             currentBroadcastId = null
+            youtubeStreamId = null
           }
         }
 
         // ── 2. Mettre à jour le texte titre dans OBS ──────────────────────────
+        await obs.call('SetInputSettings', {
+          inputName: 'Titre Live',
+          inputSettings: { text: title },
+        }).catch(() => {})
+
+        // Mise à jour Twitch si plugin actif
         await obs.call('CallVendorRequest', {
           vendorName: 'twitch',
           requestType: 'update_channel',
-          requestData: { title }
-        }).catch(() => {})
-
-        await obs.call('SetInputSettings', {
-          inputName: 'Titre Live',
-          inputSettings: { text: title }
+          requestData: { title },
         }).catch(() => {})
 
         // ── 3. Mettre la source "Flight Data" en plein écran ──────────────────
         try {
           const { currentProgramSceneName } = await obs.call('GetCurrentProgramScene')
-          const { sceneItems } = await obs.call('GetSceneItemList', { sceneName: currentProgramSceneName })
-          const flightDataItem = sceneItems.find((item: any) =>
-            item.sourceName.toLowerCase() === 'flight data' ||
-            item.sourceName.toLowerCase() === 'fligth data'
+          const { sceneItems } = await obs.call('GetSceneItemList', {
+            sceneName: currentProgramSceneName,
+          })
+          const flightDataItem = sceneItems.find(
+            (item: any) =>
+              item.sourceName.toLowerCase() === 'flight data' ||
+              item.sourceName.toLowerCase() === 'fligth data'
           )
           if (flightDataItem) {
             await obs.call('SetInputSettings', {
-              inputName: flightDataItem.sourceName,
-              inputSettings: { width: 1920, height: 1080 }
+              inputName: flightDataItem.sourceName as string,
+              inputSettings: { width: 1920, height: 1080 },
             }).catch(() => {})
             await obs.call('SetSceneItemTransform', {
               sceneName: currentProgramSceneName,
-              sceneItemId: flightDataItem.sceneItemId,
+              sceneItemId: flightDataItem.sceneItemId as number,
               sceneItemTransform: {
-                positionX: 0, positionY: 0, scaleX: 1, scaleY: 1,
-                boundsType: 'OBS_BOUNDS_STRETCH', boundsWidth: 1920, boundsHeight: 1080
-              }
+                positionX: 0,
+                positionY: 0,
+                scaleX: 1,
+                scaleY: 1,
+                boundsType: 'OBS_BOUNDS_STRETCH',
+                boundsWidth: 1920,
+                boundsHeight: 1080,
+              },
             })
           }
-        } catch { /* Ignore if scene/items not found */ }
+        } catch {
+          /* Ignore if scene/items not found */
+        }
 
         // ── 4. Lancer le stream dans OBS ──────────────────────────────────────
-        await new Promise(resolve => setTimeout(resolve, 3000))
-        await obs.call('StartStream')
-        console.log(`🎥 Live OBS démarré : "${title}"`)
+        try {
+          await obs.call('StartStream')
+          console.log(`🎥 Stream OBS démarré : "${title}"`)
+          // obsLiveStarted est déjà true (mis avant l'async pour éviter double-déclenchement)
+        } catch (err: any) {
+          console.error(`❌ Erreur démarrage stream OBS : ${err.message}`)
+          obsLiveStarted = false
+          return
+        }
+
+        // ── 5. Attendre signal actif et passer en live YouTube ────────────────
+        // (lance en background pour ne pas bloquer le countdown)
+        if (currentBroadcastId && youtubeStreamId) {
+          const broadcastId = currentBroadcastId
+          const streamId = youtubeStreamId
+          waitAndGoLive(broadcastId, streamId).catch((err: any) => {
+            console.error(`❌ Erreur waitAndGoLive : ${err.message}`)
+          })
+        }
       })().catch((err) => {
         obsLiveStarted = false
-        console.error('❌ Erreur lancement live OBS:', err.message)
+        console.error(`❌ Erreur lancement live OBS : ${err.message}`)
       })
     }
 
@@ -630,6 +751,18 @@ server = Bun.serve({
       )
       ws.send(
         JSON.stringify({
+          type: 'IRL_TIMELINE',
+          payload: irlTimeline
+        })
+      )
+      ws.send(
+        JSON.stringify({
+          type: 'TIMELINE_PRESETS',
+          payload: timelinePresets
+        })
+      )
+      ws.send(
+        JSON.stringify({
           type: 'TELEMETRY',
           payload: telemetry
         })
@@ -642,7 +775,7 @@ server = Bun.serve({
       )
     },
     message(ws, message) {
-      const data = JSON.parse(message)
+      const data = JSON.parse(message as string)
       if (data.type === 'GO_NO_GO') {
         const { system, status: newStatus } = data.payload
         // @ts-ignore
@@ -676,7 +809,7 @@ server = Bun.serve({
         targetLaunchDateMs = null
         console.log('⏸ Countdown hold manual trigger received')
       } else if (data.type === 'SELECT_LAUNCHER') {
-        currentLauncher = data.payload as keyof typeof LAUNCHERS
+        currentLauncher = data.payload as string
         resetMission()
         const statusPayloadStr = JSON.stringify({
           type: 'STATUS_UPDATE',
@@ -804,6 +937,36 @@ server = Bun.serve({
         })
         ws.send(telemetryPayloadStr)
         server.publish('houston-control', telemetryPayloadStr)
+      } else if (data.type === 'SET_IRL_TIMELINE') {
+        irlTimeline = data.payload || []
+        try {
+          writeFileSync(IRL_TIMELINE_PATH, JSON.stringify(irlTimeline, null, 2))
+          console.log(`📅 IRL Timeline saved: ${irlTimeline.length} events`)
+        } catch (err) {
+          console.error('❌ Failed to save irlTimeline.json:', err)
+        }
+        const timelinePayloadStr = JSON.stringify({
+          type: 'IRL_TIMELINE',
+          payload: irlTimeline
+        })
+        ws.send(timelinePayloadStr)
+        server.publish('houston-control', timelinePayloadStr)
+      } else if (data.type === 'GET_TIMELINE_PRESETS') {
+        ws.send(JSON.stringify({ type: 'TIMELINE_PRESETS', payload: timelinePresets }))
+      } else if (data.type === 'SAVE_TIMELINE_PRESET') {
+        const { name, events } = data.payload
+        if (name && Array.isArray(events)) {
+          timelinePresets[name] = events
+          writeFileSync(TIMELINE_PRESETS_PATH, JSON.stringify(timelinePresets, null, 2))
+          server.publish('houston-control', JSON.stringify({ type: 'TIMELINE_PRESETS', payload: timelinePresets }))
+        }
+      } else if (data.type === 'DELETE_TIMELINE_PRESET') {
+        const { name } = data.payload
+        if (name && timelinePresets[name]) {
+          delete timelinePresets[name]
+          writeFileSync(TIMELINE_PRESETS_PATH, JSON.stringify(timelinePresets, null, 2))
+          server.publish('houston-control', JSON.stringify({ type: 'TIMELINE_PRESETS', payload: timelinePresets }))
+        }
       }
     }
   }
