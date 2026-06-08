@@ -1,6 +1,6 @@
 {
   "name": "launchcenter",
-  "version": "1.1.16",
+  "version": "1.1.17",
   "module": "index.ts",
   "type": "module",
   "private": true,
