@@ -20,6 +20,6 @@
     "@elysiajs/cors": "^1.4.1",
     "@elysiajs/websocket": "^0.2.8",
     "elysia": "^1.4.22",
-    "ws": "^8.21.0"
+    "ws": "^8.21.3"
   }
 }
