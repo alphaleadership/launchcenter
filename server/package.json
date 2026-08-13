@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "googleapis": "^173.0.0",
-    "hono": "^4.11.8",
+    "hono": "^4.13.1",
     "obs-websocket-js": "^5.0.8"
   },
   "version": "0.0.27"
